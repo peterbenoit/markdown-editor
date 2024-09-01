@@ -95,7 +95,7 @@ function App() {
       } min-h-screen grid grid-rows-[auto,1fr,auto]`}
     >
       {/* Fixed top toolbar */}
-      <div className="flex items-center p-4 bg-gray-200 dark:bg-gray-700">
+      <div className="flex items-center p-4">
         <button onClick={toggleDarkMode} className="mr-3 p-2">
           {isDarkMode ? (
             <SunIcon className="h-5 w-5 text-yellow-500" />
