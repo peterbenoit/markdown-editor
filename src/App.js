@@ -50,6 +50,8 @@ function App() {
   const handleItalic = () => formatSelectedText("_", "_");
   const handleHeader = () => formatSelectedText("# ", "");
   const handleLink = () => formatSelectedText("[", "](url)");
+  const handleInlineCode = () => formatSelectedText("`", "`"); // Inline code formatting
+  const handleBlockCode = () => formatSelectedText("\n```\n", "\n```\n"); // Block code formatting
 
   const handleChange = (event) => setMarkdown(event.target.value);
 
@@ -89,6 +91,8 @@ function App() {
         <button onClick={handleItalic}>Italic</button>
         <button onClick={handleHeader}>Header</button>
         <button onClick={handleLink}>Link</button>
+        <button onClick={handleInlineCode}>Inline Code</button>
+        <button onClick={handleBlockCode}>Block Code</button>
         <button onClick={saveToFile}>Save to File</button>
         <input type="file" onChange={loadFromFile} />
       </div>
