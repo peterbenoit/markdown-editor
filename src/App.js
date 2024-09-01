@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import hljs from "highlight.js";
-import "highlight.js/styles/github-dark.css"; // Import the highlight.js theme
+// import "highlight.js/styles/github-dark.css"; // Dark theme
+import "highlight.js/styles/atom-one-dark.css"; // Alternative dark theme
+import "highlight.js/styles/github.css"; // Light theme
 import {
   SunIcon,
   MoonIcon,
@@ -43,6 +45,12 @@ function App() {
   useEffect(() => {
     localStorage.setItem("markdown", markdown);
   }, [markdown]);
+
+  // Inside the effect hook to update highlighting
+  useEffect(() => {
+    // Apply syntax highlighting after rendering
+    hljs.highlightAll();
+  }, [markdown, isDarkMode]);
 
   // Function to format selected text and handle spaces
   const formatSelectedText = (before, after = "") => {
@@ -131,7 +139,9 @@ function App() {
     <div
       className={`${
         isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
-      } min-h-screen grid grid-rows-[auto,1fr,auto]`}
+      } min-h-screen grid grid-rows-[auto,1fr,auto] ${
+        isDarkMode ? "dark-theme" : "light-theme"
+      }`}
     >
       {/* Fixed top toolbar */}
       <div className="flex items-center p-4">
@@ -208,7 +218,7 @@ function App() {
         <div
           className={`w-1/2 p-4 border-l overflow-y-scroll ${
             isDarkMode ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"
-          } h-full`}
+          } h-full markdown-content`}
           dangerouslySetInnerHTML={{ __html: marked(markdown) }}
         />
       </div>
