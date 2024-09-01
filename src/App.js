@@ -92,10 +92,10 @@ function App() {
     <div
       className={`${
         isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
-      } min-h-screen flex flex-col`}
+      } min-h-screen grid grid-rows-[auto,1fr,auto]`}
     >
       {/* Fixed top toolbar */}
-      <div className="flex items-center p-4 fixed top-0 left-0 w-full z-10">
+      <div className="flex items-center p-4 bg-gray-200 dark:bg-gray-700">
         <button onClick={toggleDarkMode} className="mr-3 p-2">
           {isDarkMode ? (
             <SunIcon className="h-5 w-5 text-yellow-500" />
@@ -130,28 +130,28 @@ function App() {
       </div>
 
       {/* Main content area */}
-      <div className="flex-grow flex mt-16 mb-12">
+      <div className="flex">
         <textarea
           ref={textareaRef}
-          className={`w-1/2 p-4 resize-none h-[calc(100vh-8rem)] ${
+          className={`w-1/2 p-4 resize-none ${
             isDarkMode ? "bg-gray-700 text-white" : "bg-gray-100 text-gray-900"
-          }`}
+          } h-full`}
           value={markdown}
           onChange={handleChange}
           placeholder="Enter Markdown text here..."
         />
 
         <div
-          className={`w-1/2 p-4 border-l overflow-y-scroll h-[calc(100vh-8rem)] ${
+          className={`w-1/2 p-4 border-l overflow-y-scroll ${
             isDarkMode ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"
-          }`}
+          } h-full`}
           dangerouslySetInnerHTML={{ __html: marked(markdown) }}
         />
       </div>
 
       {/* Fixed bottom toolbar */}
       <div
-        className={`fixed bottom-0 left-0 w-full py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white flex justify-between items-center`}
+        className={`py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white flex justify-between items-center`}
       >
         <div className="flex items-center space-x-4">
           <span>Words: {markdown.split(/\s+/).filter(Boolean).length}</span>
