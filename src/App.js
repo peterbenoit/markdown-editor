@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import hljs from "highlight.js";
-import "highlight.js/styles/github-dark.css"; // Import a highlight.js theme
+import "highlight.js/styles/github-dark.css"; // Import the highlight.js theme
+import {
+  SunIcon,
+  MoonIcon,
+  CodeBracketIcon,
+  BoldIcon,
+  ItalicIcon,
+  LinkIcon,
+  DocumentDuplicateIcon,
+} from "@heroicons/react/24/outline"; // Corrected Heroicons v2 imports
+import "./index.css";
 
 function App() {
   const [markdown, setMarkdown] = useState("");
@@ -11,10 +21,14 @@ function App() {
   // Configure marked to use highlight.js for code blocks
   useEffect(() => {
     marked.setOptions({
-      highlight: function (code, lang) {
-        const language = hljs.getLanguage(lang) ? lang : "plaintext";
-        return hljs.highlight(code, { language }).value;
+      highlight: (code, lang) => {
+        if (lang && hljs.getLanguage(lang)) {
+          return hljs.highlight(code, { language: lang }).value;
+        } else {
+          return hljs.highlightAuto(code).value;
+        }
       },
+      langPrefix: "hljs language-", // Prefix for highlight.js classes
     });
   }, []);
 
@@ -50,8 +64,8 @@ function App() {
   const handleItalic = () => formatSelectedText("_", "_");
   const handleHeader = () => formatSelectedText("# ", "");
   const handleLink = () => formatSelectedText("[", "](url)");
-  const handleInlineCode = () => formatSelectedText("`", "`"); // Inline code formatting
-  const handleBlockCode = () => formatSelectedText("\n```\n", "\n```\n"); // Block code formatting
+  const handleInlineCode = () => formatSelectedText("`", "`");
+  const handleBlockCode = () => formatSelectedText("\n```\n", "\n```\n");
 
   const handleChange = (event) => setMarkdown(event.target.value);
 
@@ -76,58 +90,67 @@ function App() {
 
   return (
     <div
-      style={{
-        backgroundColor: isDarkMode ? "#333" : "#fff",
-        color: isDarkMode ? "#fff" : "#000",
-        minHeight: "100vh",
-        padding: "20px",
-      }}
+      className={`${
+        isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
+      } min-h-screen p-5`}
     >
-      <button onClick={toggleDarkMode} style={{ marginBottom: "20px" }}>
-        Toggle Dark Mode
-      </button>
-      <div>
-        <button onClick={handleBold}>Bold</button>
-        <button onClick={handleItalic}>Italic</button>
-        <button onClick={handleHeader}>Header</button>
-        <button onClick={handleLink}>Link</button>
-        <button onClick={handleInlineCode}>Inline Code</button>
-        <button onClick={handleBlockCode}>Block Code</button>
-        <button onClick={saveToFile}>Save to File</button>
-        <input type="file" onChange={loadFromFile} />
+      <div className="flex items-center mb-5">
+        <button onClick={toggleDarkMode} className="mr-3 p-2">
+          {isDarkMode ? (
+            <SunIcon className="h-5 w-5 text-yellow-500" />
+          ) : (
+            <MoonIcon className="h-5 w-5 text-blue-500" />
+          )}
+        </button>
+        <div className="flex space-x-2">
+          <button onClick={handleBold} className="p-2">
+            <BoldIcon className="h-5 w-5" />
+          </button>
+          <button onClick={handleItalic} className="p-2">
+            <ItalicIcon className="h-5 w-5" />
+          </button>
+          <button onClick={handleHeader} className="p-2">
+            <DocumentDuplicateIcon className="h-5 w-5" />
+          </button>
+          <button onClick={handleLink} className="p-2">
+            <LinkIcon className="h-5 w-5" />
+          </button>
+          <button onClick={handleInlineCode} className="p-2">
+            <CodeBracketIcon className="h-5 w-5" />
+          </button>
+          <button onClick={handleBlockCode} className="p-2">
+            <DocumentDuplicateIcon className="h-5 w-5" />
+          </button>
+          <button onClick={saveToFile} className="p-2">
+            Save to File
+          </button>
+          <input type="file" onChange={loadFromFile} className="p-2" />
+        </div>
       </div>
 
-      <div style={{ display: "flex", padding: "20px" }}>
+      <div className="flex space-x-4">
         <textarea
-          ref={textareaRef} // Attach the reference to the textarea
-          style={{
-            width: "50%",
-            height: "400px",
-            marginRight: "20px",
-            backgroundColor: isDarkMode ? "#555" : "#fff",
-            color: isDarkMode ? "#fff" : "#000",
-          }}
+          ref={textareaRef}
+          className={`w-1/2 h-96 p-2 rounded-md ${
+            isDarkMode ? "bg-gray-700 text-white" : "bg-gray-100 text-gray-900"
+          }`}
           value={markdown}
           onChange={handleChange}
           placeholder="Enter Markdown text here..."
         />
 
         <div
-          style={{
-            width: "50%",
-            height: "400px",
-            overflowY: "scroll",
-            padding: "10px",
-            border: "1px solid #ddd",
-            backgroundColor: isDarkMode ? "#222" : "#fff",
-            color: isDarkMode ? "#fff" : "#000",
-          }}
+          className={`w-1/2 h-96 p-4 border rounded-md overflow-y-scroll ${
+            isDarkMode ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"
+          }`}
           dangerouslySetInnerHTML={{ __html: marked(markdown) }}
         />
       </div>
 
-      <p>Words: {markdown.split(/\s+/).filter(Boolean).length}</p>
-      <p>Characters: {markdown.length}</p>
+      <div className="mt-4">
+        <p>Words: {markdown.split(/\s+/).filter(Boolean).length}</p>
+        <p>Characters: {markdown.length}</p>
+      </div>
     </div>
   );
 }
