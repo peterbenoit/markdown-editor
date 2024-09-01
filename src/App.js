@@ -16,6 +16,7 @@ import "./index.css";
 function App() {
   const [markdown, setMarkdown] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
+  const [isTextSelected, setIsTextSelected] = useState(false); // Text selection state
   const textareaRef = useRef(null); // Reference to the textarea
 
   // Configure marked to use highlight.js for code blocks
@@ -43,20 +44,37 @@ function App() {
     localStorage.setItem("markdown", markdown);
   }, [markdown]);
 
-  // Function to format selected text
+  // Function to format selected text and handle spaces
   const formatSelectedText = (before, after = "") => {
     const textarea = textareaRef.current;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = markdown.slice(start, end);
+
+    if (!selectedText) return; // Do nothing if no text is selected
+
+    // Trim spaces and add them back after formatting
+    const leadingSpaces = selectedText.match(/^\s*/)[0]; // Leading spaces
+    const trailingSpaces = selectedText.match(/\s*$/)[0]; // Trailing spaces
+    const trimmedText = selectedText.trim(); // Remove spaces for formatting
+
     const newMarkdown =
       markdown.slice(0, start) +
+      leadingSpaces + // Add leading spaces back
       before +
-      selectedText +
+      trimmedText +
       after +
+      trailingSpaces + // Add trailing spaces back
       markdown.slice(end);
     setMarkdown(newMarkdown);
     textarea.focus();
+  };
+
+  // Check if text is selected in the textarea
+  const checkTextSelection = () => {
+    const textarea = textareaRef.current;
+    const isTextSelected = textarea.selectionStart !== textarea.selectionEnd;
+    setIsTextSelected(isTextSelected);
   };
 
   // Handlers for markdown formatting
@@ -67,7 +85,10 @@ function App() {
   const handleInlineCode = () => formatSelectedText("`", "`");
   const handleBlockCode = () => formatSelectedText("\n```\n", "\n```\n");
 
-  const handleChange = (event) => setMarkdown(event.target.value);
+  const handleChange = (event) => {
+    setMarkdown(event.target.value);
+    checkTextSelection(); // Check selection whenever text changes
+  };
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -88,6 +109,24 @@ function App() {
     if (file) reader.readAsText(file);
   };
 
+  // Function to strip Markdown formatting and get the plain text
+  const getPlainText = (markdown) => {
+    return markdown
+      .replace(/(\*\*|__)(.*?)\1/g, "$2") // Bold
+      .replace(/(\*|_)(.*?)\1/g, "$2") // Italic
+      .replace(/`([^`]*)`/g, "$1") // Inline code
+      .replace(/```([\s\S]*?)```/g, "$1") // Code blocks
+      .replace(
+        /$begin:math:display$(.*?)$end:math:display$$begin:math:text$(.*?)$end:math:text$/g,
+        "$1"
+      ) // Links
+      .replace(/^# (.*$)/gim, "$1") // Headers
+      .replace(/^\s*[\r\n]/gm, ""); // Remove extra newlines
+  };
+
+  // Adjusted character count
+  const characterCount = getPlainText(markdown).length;
+
   return (
     <div
       className={`${
@@ -104,22 +143,46 @@ function App() {
           )}
         </button>
         <div className="flex space-x-2">
-          <button onClick={handleBold} className="p-2">
+          <button
+            onClick={handleBold}
+            className="p-2"
+            disabled={!isTextSelected}
+          >
             <BoldIcon className="h-5 w-5" />
           </button>
-          <button onClick={handleItalic} className="p-2">
+          <button
+            onClick={handleItalic}
+            className="p-2"
+            disabled={!isTextSelected}
+          >
             <ItalicIcon className="h-5 w-5" />
           </button>
-          <button onClick={handleHeader} className="p-2">
+          <button
+            onClick={handleHeader}
+            className="p-2"
+            disabled={!isTextSelected}
+          >
             <DocumentDuplicateIcon className="h-5 w-5" />
           </button>
-          <button onClick={handleLink} className="p-2">
+          <button
+            onClick={handleLink}
+            className="p-2"
+            disabled={!isTextSelected}
+          >
             <LinkIcon className="h-5 w-5" />
           </button>
-          <button onClick={handleInlineCode} className="p-2">
+          <button
+            onClick={handleInlineCode}
+            className="p-2"
+            disabled={!isTextSelected}
+          >
             <CodeBracketIcon className="h-5 w-5" />
           </button>
-          <button onClick={handleBlockCode} className="p-2">
+          <button
+            onClick={handleBlockCode}
+            className="p-2"
+            disabled={!isTextSelected}
+          >
             <DocumentDuplicateIcon className="h-5 w-5" />
           </button>
           <button onClick={saveToFile} className="p-2">
@@ -138,6 +201,7 @@ function App() {
           } h-full`}
           value={markdown}
           onChange={handleChange}
+          onSelect={checkTextSelection} // Check selection when user selects text
           placeholder="Enter Markdown text here..."
         />
 
@@ -155,7 +219,7 @@ function App() {
       >
         <div className="flex items-center space-x-4">
           <span>Words: {markdown.split(/\s+/).filter(Boolean).length}</span>
-          <span>Characters: {markdown.length}</span>
+          <span>Characters: {characterCount}</span>
         </div>
       </div>
     </div>
