@@ -31,7 +31,7 @@ function App() {
           return hljs.highlightAuto(code).value;
         }
       },
-      langPrefix: "hljs language-", // Prefix for highlight.js classes
+      langPrefix: "hljs language-",
     });
   }, []);
 
@@ -59,20 +59,20 @@ function App() {
     const end = textarea.selectionEnd;
     const selectedText = markdown.slice(start, end);
 
-    if (!selectedText) return; // Do nothing if no text is selected
+    if (!selectedText) return;
 
     // Trim spaces and add them back after formatting
-    const leadingSpaces = selectedText.match(/^\s*/)[0]; // Leading spaces
-    const trailingSpaces = selectedText.match(/\s*$/)[0]; // Trailing spaces
-    const trimmedText = selectedText.trim(); // Remove spaces for formatting
+    const leadingSpaces = selectedText.match(/^\s*/)[0];
+    const trailingSpaces = selectedText.match(/\s*$/)[0];
+    const trimmedText = selectedText.trim();
 
     const newMarkdown =
       markdown.slice(0, start) +
-      leadingSpaces + // Add leading spaces back
+      leadingSpaces +
       before +
       trimmedText +
       after +
-      trailingSpaces + // Add trailing spaces back
+      trailingSpaces +
       markdown.slice(end);
     setMarkdown(newMarkdown);
     textarea.focus();
@@ -95,7 +95,7 @@ function App() {
 
   const handleChange = (event) => {
     setMarkdown(event.target.value);
-    checkTextSelection(); // Check selection whenever text changes
+    checkTextSelection();
   };
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
@@ -120,16 +120,16 @@ function App() {
   // Function to strip Markdown formatting and get the plain text
   const getPlainText = (markdown) => {
     return markdown
-      .replace(/(\*\*|__)(.*?)\1/g, "$2") // Bold
-      .replace(/(\*|_)(.*?)\1/g, "$2") // Italic
-      .replace(/`([^`]*)`/g, "$1") // Inline code
-      .replace(/```([\s\S]*?)```/g, "$1") // Code blocks
+      .replace(/(\*\*|__)(.*?)\1/g, "$2")
+      .replace(/(\*|_)(.*?)\1/g, "$2")
+      .replace(/`([^`]*)`/g, "$1")
+      .replace(/```([\s\S]*?)```/g, "$1")
       .replace(
         /$begin:math:display$(.*?)$end:math:display$$begin:math:text$(.*?)$end:math:text$/g,
         "$1"
       ) // Links
-      .replace(/^# (.*$)/gim, "$1") // Headers
-      .replace(/^\s*[\r\n]/gm, ""); // Remove extra newlines
+      .replace(/^# (.*$)/gim, "$1")
+      .replace(/^\s*[\r\n]/gm, "");
   };
 
   // Adjusted character count
@@ -211,7 +211,7 @@ function App() {
           } h-full`}
           value={markdown}
           onChange={handleChange}
-          onSelect={checkTextSelection} // Check selection when user selects text
+          onSelect={checkTextSelection}
           placeholder="Enter Markdown text here..."
         />
 
