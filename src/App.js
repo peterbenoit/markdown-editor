@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import hljs from "highlight.js";
-// import "highlight.js/styles/github-dark.css"; // Dark theme
-import "highlight.js/styles/atom-one-dark.css"; // Alternative dark theme
-import "highlight.js/styles/github.css"; // Light theme
+import "highlight.js/styles/atom-one-dark.css";
+import "highlight.js/styles/github.css";
 import {
   SunIcon,
   MoonIcon,
@@ -12,14 +11,14 @@ import {
   ItalicIcon,
   LinkIcon,
   DocumentDuplicateIcon,
-} from "@heroicons/react/24/outline"; // Corrected Heroicons v2 imports
+} from "@heroicons/react/24/outline";
 import "./index.css";
 
 function App() {
   const [markdown, setMarkdown] = useState("");
-  const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
-  const [isTextSelected, setIsTextSelected] = useState(false); // Text selection state
-  const textareaRef = useRef(null); // Reference to the textarea
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isTextSelected, setIsTextSelected] = useState(false);
+  const textareaRef = useRef(null);
 
   // Configure marked to use highlight.js for code blocks
   useEffect(() => {
@@ -48,7 +47,6 @@ function App() {
 
   // Inside the effect hook to update highlighting
   useEffect(() => {
-    // Apply syntax highlighting after rendering
     hljs.highlightAll();
   }, [markdown, isDarkMode]);
 
