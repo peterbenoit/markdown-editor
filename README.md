@@ -1,83 +1,62 @@
-# 📝 Markdown Editor
+# Markdown Editor
 
-Welcome to the **Markdown Editor** project! This web-based editor allows you to write, format, and preview Markdown in real-time, making it a perfect tool for content creators, developers, and anyone who loves working with Markdown. 🚀
+A browser-based Markdown editor with real-time preview, syntax highlighting, and light/dark mode. Built with React and Vite.
 
-## ✨ Features
+## Features
 
--   **Real-time Markdown Preview**: Type Markdown on the left pane and instantly see the rendered output on the right.
--   **Dynamic Theme Toggle**: Switch between light and dark modes to suit your preference.
--   **Text Formatting Tools**: Apply bold, italic, headers, links, and code formatting to selected text with a single click.
--   **Syntax Highlighting**: Code blocks are highlighted using `highlight.js` to enhance readability.
--   **Save and Load Files**: Save your Markdown content to a file or load existing Markdown files directly into the editor.
+- Real-time Markdown preview
+- Light and dark mode toggle
+- Text formatting toolbar (bold, italic, headers, links, code)
+- Syntax highlighting via `highlight.js`
+- Save content to a `.md` file or load an existing one
 
-## 🔗 Live Demo
-
-Check out the [Live Demo on CodeSandbox](https://codesandbox.io/p/github/peterbenoit/markdown-editor/) to see it in action.
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-To run this project locally, you will need:
-
--   [Node.js](https://nodejs.org/) installed on your machine.
--   A package manager like `npm` (comes with Node.js) or `yarn`.
+- [Node.js](https://nodejs.org/) (v18 or later recommended)
+- `npm`
 
 ### Installation
 
-1. **Clone the repository:**
+```bash
+git clone https://github.com/peterbenoit/markdown-editor.git
+cd markdown-editor
+npm install
+```
 
-    ```bash
-    git clone https://github.com/peterbenoit/markdown-editor.git
-    cd markdown-editor
-    ```
+### Development
 
-2. **Install the dependencies:**
+```bash
+npm run dev
+```
 
-    ```bash
-    npm install
-    # or
-    yarn install
-    ```
+Opens at [http://localhost:5173](http://localhost:5173).
 
-3. **Run the development server:**
+### Production Build
 
-    ```bash
-    npm start
-    # or
-    yarn start
-    ```
+```bash
+npm run build
+```
 
-    The editor should now be running on [http://localhost:3000](http://localhost:3000).
+Output goes to `dist/`.
 
-## 📚 Usage
+## Usage
 
--   **Write Markdown**: Type your Markdown text in the left pane.
--   **Apply Formatting**: Use the toolbar buttons to quickly apply bold, italic, links, headers, and code formatting.
--   **Toggle Theme**: Click the theme toggle button to switch between light and dark mode.
--   **Save and Load Files**: Use the save button to download your Markdown to a file, or load a Markdown file from your local storage.
+- Type Markdown in the left pane. The right pane renders it live.
+- Select text, then use the toolbar buttons to apply formatting.
+- Use the theme toggle to switch between light and dark mode.
+- Save your content to a file or load an existing Markdown file using the toolbar controls.
 
-## 🎨 Customization
+## Customization
 
-You can customize the editor by:
+- Styles: `src/index.css`
+- Syntax highlight theme: swap the `highlight.js` CSS import in `App.js`
 
--   **Modifying the CSS**: Change `index.css` to adjust the styles to your liking.
--   **Changing the Theme**: Customize `highlight.js` themes for syntax highlighting in `App.js`.
+## Contributing
 
-## 🤝 Contributing
+Fork the repo and open a pull request. For significant changes, open an issue first.
 
-Contributions are welcome! Please fork the repository and submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
+## License
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## ✨ Acknowledgments
-
--   [React](https://reactjs.org/) for the awesome JavaScript library.
--   [highlight.js](https://highlightjs.org/) for syntax highlighting.
--   [Heroicons](https://heroicons.com/) for beautiful icons.
-
----
-
-Feel free to reach out if you have any questions or suggestions! Enjoy using the **Markdown Editor**! 🌟
+MIT
