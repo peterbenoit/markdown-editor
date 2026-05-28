@@ -167,8 +167,8 @@ function App() {
     >
       <div
         className={
-          "flex items-center gap-1 p-3 border-b flex-wrap " +
-          (isDarkMode ? "border-gray-600" : "border-gray-300")
+          "sticky top-0 z-10 flex items-center gap-1 p-3 border-b flex-wrap " +
+          (isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300")
         }
       >
         <button
@@ -267,17 +267,40 @@ function App() {
         </div>
       </div>
 
-      <div
+      <footer
         className={
-          "py-2 px-4 text-xs flex gap-4 border-t " +
+          "py-2 px-4 text-xs flex items-center justify-between gap-4 border-t " +
           (isDarkMode
             ? "bg-gray-900 text-gray-400 border-gray-700"
             : "bg-gray-100 text-gray-500 border-gray-200")
         }
       >
-        <span>Words: {wordCount}</span>
-        <span>Characters: {charCount}</span>
-      </div>
+        <span>
+          <span>Words: {wordCount}</span>
+          <span className="mx-2">·</span>
+          <span>Characters: {charCount}</span>
+        </span>
+        <span>
+          Built by{" "}
+          <a
+            href="https://peterbenoit.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-gray-900"}
+          >
+            Peter Benoit
+          </a>
+          {" · "}
+          <a
+            href="https://peterbenoit.com/markdown-fun/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-gray-900"}
+          >
+            Portfolio page
+          </a>
+        </span>
+      </footer>
     </div>
   );
 }
