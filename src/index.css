@@ -20,18 +20,6 @@ textarea:focus-visible {
 	outline: none;
 }
 
-/* Light theme */
-.light-theme pre code,
-.bg-gray-100 {
-	background-color: #f6f8fa;
-}
-
-/* Dark theme */
-.dark-theme pre code,
-.bg-gray-800 {
-	background-color: #2d2d2d;
-}
-
 /* Styles for Markdown headings */
 .markdown-content h1,
 .markdown-content h2,
@@ -128,7 +116,6 @@ textarea:focus-visible {
 .markdown-content td {
 	padding: 0.5em 0.75em;
 	border: 1px solid #d1d5db;
-	text-align: left;
 }
 
 .markdown-content th {
