@@ -62,6 +62,25 @@ function App() {
     textarea.focus();
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const textarea = textareaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      setMarkdown(markdown.slice(0, start) + "  " + markdown.slice(end));
+      requestAnimationFrame(() => {
+        textarea.setSelectionRange(start + 2, start + 2);
+      });
+      return;
+    }
+    if (e.metaKey || e.ctrlKey) {
+      if (e.key === "b") { e.preventDefault(); formatSelectedText("**", "**"); }
+      else if (e.key === "i") { e.preventDefault(); formatSelectedText("_", "_"); }
+      else if (e.key === "k") { e.preventDefault(); formatSelectedText("[", "](url)"); }
+    }
+  };
+
   const checkTextSelection = () => {
     const textarea = textareaRef.current;
     setIsTextSelected(textarea.selectionStart !== textarea.selectionEnd);
@@ -200,6 +219,7 @@ function App() {
           }
           value={markdown}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
           onSelect={checkTextSelection}
           placeholder="Enter Markdown here..."
           spellCheck="false"
