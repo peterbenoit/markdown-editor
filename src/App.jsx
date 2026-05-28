@@ -10,6 +10,7 @@ import {
   ItalicIcon,
   LinkIcon,
   CodeBracketIcon,
+  GitHubIcon,
 } from "./icons.jsx";
 import "highlight.js/styles/atom-one-dark.css";
 import "./index.css";
@@ -165,66 +166,87 @@ function App() {
           : "bg-white text-gray-900 light-theme min-h-screen grid grid-rows-[auto,1fr,auto]"
       }
     >
-      <div
+      <header
         className={
-          "sticky top-0 z-10 flex items-center gap-1 p-3 border-b flex-wrap " +
-          (isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300")
+          "sticky top-0 z-10 flex items-center gap-2 px-3 py-2 border-b " +
+          (isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200")
         }
       >
-        <button
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className={`p-2 rounded transition-colors ${btnTheme} mr-1`}
-          aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-        >
-          {isDarkMode
-            ? <SunIcon className="h-5 w-5 text-yellow-400" />
-            : <MoonIcon className="h-5 w-5 text-blue-500" />
-          }
-        </button>
+        {/* Logo + name */}
+        <div className="flex items-center gap-2 shrink-0">
+          <img src="/logo.png" alt="" className="h-7 w-7" aria-hidden="true" />
+          <span className={"font-semibold text-sm tracking-tight " + (isDarkMode ? "text-white" : "text-gray-800")}>
+            Markdown Editor
+          </span>
+        </div>
 
-        {iconButtons.map(({ icon: Icon, title, handler }) => (
-          <button
-            key={title}
-            onClick={handler}
-            disabled={!isTextSelected}
-            title={title}
-            aria-label={title}
-            className={`p-2 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
-          >
-            <Icon className="h-5 w-5" />
-          </button>
-        ))}
+        <span className={"w-px self-stretch mx-1 " + (isDarkMode ? "bg-gray-600" : "bg-gray-200")} aria-hidden="true" />
 
-        <span className={`w-px h-6 mx-1 ${isDarkMode ? "bg-gray-500" : "bg-gray-300"}`} aria-hidden="true" />
+        {/* Formatting toolbar — centered */}
+        <div className="flex items-center gap-1 flex-1 flex-wrap">
+          {iconButtons.map(({ icon: Icon, title, handler }) => (
+            <button
+              key={title}
+              onClick={handler}
+              disabled={!isTextSelected}
+              title={title}
+              aria-label={title}
+              className={`p-1.5 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
+            >
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
 
-        {headingButtons.map(({ label, handler }) => (
-          <button
-            key={label}
-            onClick={handler}
-            disabled={!isTextSelected}
-            title={`Insert ${label}`}
-            aria-label={`Insert ${label}`}
-            className={`px-2 py-1 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
-          >
-            {label}
-          </button>
-        ))}
+          <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
 
-        <div className="flex items-center gap-1 ml-2">
-          <button onClick={saveToFile} className={`px-3 py-1 rounded text-sm font-medium transition-colors ${btnTheme}`}>
+          {headingButtons.map(({ label, handler }) => (
+            <button
+              key={label}
+              onClick={handler}
+              disabled={!isTextSelected}
+              title={`Insert ${label}`}
+              aria-label={`Insert ${label}`}
+              className={`px-1.5 py-0.5 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
+            >
+              {label}
+            </button>
+          ))}
+
+          <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
+
+          <button onClick={saveToFile} className={`px-2 py-1 rounded text-xs font-medium transition-colors ${btnTheme}`}>
             Save
           </button>
-          <label className={`px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${btnTheme}`}>
+          <label className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${btnTheme}`}>
             Load
-            <input
-              type="file"
-              accept=".md,.txt"
-              onChange={loadFromFile}
-              className="sr-only"
-            />
+            <input type="file" accept=".md,.txt" onChange={loadFromFile} className="sr-only" />
           </label>
         </div>
-      </div>
+
+        {/* Right rail — theme toggle + GitHub */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={`p-1.5 rounded transition-colors ${btnTheme}`}
+            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDarkMode
+              ? <SunIcon className="h-4 w-4 text-yellow-400" />
+              : <MoonIcon className="h-4 w-4 text-blue-500" />
+            }
+          </button>
+          <a
+            href="https://github.com/peterbenoit/markdown-editor"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View source on GitHub"
+            title="View source on GitHub"
+            className={`p-1.5 rounded transition-colors ${btnTheme}`}
+          >
+            <GitHubIcon className="h-4 w-4" />
+          </a>
+        </div>
+      </header>
 
       <div className="flex overflow-hidden">
         <textarea
