@@ -1,13 +1,8 @@
----
-__Advertisement :)__
-
-- __[pica](https://nodeca.github.io/pica/demo/)__ - high quality and fast image
-  resize in browser.
-- __[babelfish](https://github.com/nodeca/babelfish/)__ - developer friendly
-  i18n with plurals support and easy syntax.
-
-You will like those projects!
-
+markdown_content = """---
+title: Sample Markdown file with a variety of non-standard elements
+description: Sample Markdown file with a variety of non-standard elements
+author: Peter Benoit
+date: 2026-05-28
 ---
 
 # h1 Heading 8-)
