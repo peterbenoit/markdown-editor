@@ -51,7 +51,7 @@ Output goes to `dist/`.
 ## Customization
 
 - Styles: `src/index.css`
-- Syntax highlight theme: swap the `highlight.js` CSS import in `App.js`
+- Syntax highlight theme: swap the `highlight.js` CSS import in `App.jsx`
 
 ## Contributing
 

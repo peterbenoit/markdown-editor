@@ -10,7 +10,6 @@ import {
   ItalicIcon,
   LinkIcon,
   CodeBracketIcon,
-  DocumentDuplicateIcon,
 } from "./icons.jsx";
 import "highlight.js/styles/atom-one-dark.css";
 import "./index.css";
@@ -109,13 +108,18 @@ function App() {
     ? "bg-gray-600 text-gray-100 hover:bg-gray-500"
     : "bg-gray-200 text-gray-800 hover:bg-gray-300";
 
-  const toolbarButtons = [
+  const iconButtons = [
     { icon: BoldIcon, title: "Bold", handler: () => formatSelectedText("**", "**") },
     { icon: ItalicIcon, title: "Italic", handler: () => formatSelectedText("_", "_") },
-    { icon: DocumentDuplicateIcon, title: "Heading", handler: () => formatSelectedText("# ") },
     { icon: LinkIcon, title: "Link", handler: () => formatSelectedText("[", "](url)") },
     { icon: CodeBracketIcon, title: "Inline code", handler: () => formatSelectedText("`", "`") },
-    { icon: DocumentDuplicateIcon, title: "Code block", handler: () => formatSelectedText("\n```\n", "\n```\n") },
+    { icon: CodeBracketIcon, title: "Code block", handler: () => formatSelectedText("\n```\n", "\n```\n") },
+  ];
+
+  const headingButtons = [
+    { label: "H1", handler: () => formatSelectedText("# ") },
+    { label: "H2", handler: () => formatSelectedText("## ") },
+    { label: "H3", handler: () => formatSelectedText("### ") },
   ];
 
   return (
@@ -143,7 +147,7 @@ function App() {
           }
         </button>
 
-        {toolbarButtons.map(({ icon: Icon, title, handler }) => (
+        {iconButtons.map(({ icon: Icon, title, handler }) => (
           <button
             key={title}
             onClick={handler}
@@ -153,6 +157,21 @@ function App() {
             className={`p-2 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
           >
             <Icon className="h-5 w-5" />
+          </button>
+        ))}
+
+        <span className={`w-px h-6 mx-1 ${isDarkMode ? "bg-gray-500" : "bg-gray-300"}`} aria-hidden="true" />
+
+        {headingButtons.map(({ label, handler }) => (
+          <button
+            key={label}
+            onClick={handler}
+            disabled={!isTextSelected}
+            title={`Insert ${label}`}
+            aria-label={`Insert ${label}`}
+            className={`px-2 py-1 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
+          >
+            {label}
           </button>
         ))}
 
