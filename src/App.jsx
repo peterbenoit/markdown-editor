@@ -24,6 +24,21 @@ marked.use(
   })
 );
 
+function parseFrontmatter(text) {
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!match) return { meta: null, body: text };
+  const raw = match[1];
+  const meta = {};
+  for (const line of raw.split(/\r?\n/)) {
+    const colon = line.indexOf(":");
+    if (colon === -1) continue;
+    const key = line.slice(0, colon).trim();
+    const value = line.slice(colon + 1).trim();
+    if (key) meta[key] = value;
+  }
+  return { meta, body: text.slice(match[0].length) };
+}
+
 function App() {
   const [markdown, setMarkdown] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -121,7 +136,8 @@ function App() {
 
   const wordCount = markdown.split(/\s+/).filter(Boolean).length;
   const charCount = getPlainText(markdown).length;
-  const html = DOMPurify.sanitize(marked.parse(markdown));
+  const { meta, body } = parseFrontmatter(markdown);
+  const html = DOMPurify.sanitize(marked.parse(body));
 
   const btnTheme = isDarkMode
     ? "bg-gray-600 text-gray-100 hover:bg-gray-500"
@@ -231,8 +247,27 @@ function App() {
               ? "bg-gray-800 text-white border-gray-600"
               : "bg-white text-gray-900 border-gray-200")
           }
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        >
+          {meta && (
+            <dl
+              className={
+                "mb-4 p-3 rounded text-xs border grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 " +
+                (isDarkMode
+                  ? "bg-gray-700 border-gray-600 text-gray-300"
+                  : "bg-gray-50 border-gray-200 text-gray-500")
+              }
+              aria-label="Document metadata"
+            >
+              {Object.entries(meta).map(([k, v]) => (
+                <React.Fragment key={k}>
+                  <dt className="font-semibold capitalize">{k}</dt>
+                  <dd>{v}</dd>
+                </React.Fragment>
+              ))}
+            </dl>
+          )}
+          <div dangerouslySetInnerHTML={{ __html: html }} />
+        </div>
       </div>
 
       <div
