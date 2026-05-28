@@ -1,7 +1,7 @@
 ---
 title: Comprehensive Markdown Test Suite
 description: A complete file containing various Markdown and GFM (GitHub Flavored Markdown) elements for testing parsers and renderers.
-author: Peter Benoit
+author: Gemini
 date: 2026-05-28
 ---
 
@@ -139,3 +139,166 @@ Blockquotes with other elements:
         return True
 
 ### Fenced Code Blocks (No Language Specified)
+
+
+```
+
+```text
+File created at /mnt/data/comprehensive-markdown-test-suite.md
+
+
+```
+
+Plain text code block.
+No syntax highlighting applied here.
+
+```
+
+### Fenced Code Blocks (Syntax Highlighting)
+
+```javascript
+// JavaScript Example
+function calculateSum(a, b) {
+  return a + b;
+}
+const result = calculateSum(5, 10);
+console.log(`The result is ${result}`);
+
+```
+
+```python
+# Python Example
+import os
+
+class MarkdownTester:
+    def __init__(self):
+        self.status = "Ready"
+
+    def run_tests(self):
+        return [True, False, None]
+
+```
+
+```css
+/* CSS Example */
+body {
+    background-color: #f4f4f4;
+    color: #333333;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+```
+
+```html
+<div class="container">
+    <h1>Hello World</h1>
+    <p>This is a test.</p>
+</div>
+
+```
+
+---
+
+## 7. Horizontal Rules (Thematic Breaks)
+
+Three or more asterisks:
+
+---
+
+## Three or more hyphens:
+
+Three or more underscores:
+
+---
+
+---
+
+## 8. Links
+
+[Standard Inline Link](https://www.google.com)
+
+[Link with Title](https://www.google.com)
+
+[Reference-style Link](https://www.example.com)
+
+[Another Reference-style Link with specific ID](https://www.google.com)
+
+Autolinks:
+[https://www.example.com](https://www.example.com)
+[test@example.com](mailto:test@example.com)
+
+Local / Anchor Links:
+[Jump to Headings](#1-headings)
+
+---
+
+## 9. Images
+
+Reference-style Image:
+
+
+Linked Image:
+[](https://www.google.com)
+
+---
+
+## 10. Tables (GFM)
+
+| Default Alignment | Left Alignment | Center Alignment | Right Alignment |
+| --- | --- | --- | --- |
+| Row 1, Col 1 | Row 1, Col 2 | Row 1, Col 3 | Row 1, Col 4 |
+| Row 2, Col 1 | Row 2, Col 2 | Row 2, Col 3 | Row 2, Col 4 |
+| Cell with **Bold** | `Inline Code` | [Link](#) | ~~Strike~~ |
+
+---
+
+## 11. HTML Elements & Typographic Enhancements
+
+Sometimes standard Markdown isn't enough, and parsers allow raw HTML.
+
+Use `<kbd>` tags for keyboard shortcuts: Ctrl + Alt + Delete
+
+Use `<sub>` for subscript (e.g., H2O).
+
+Use `<sup>` for superscript (e.g., E = mc2).
+
+Use `<mark>` to highlight text.
+
+---
+
+## 12. Footnotes (Extended Markdown)
+
+Here is a simple footnote[^1].
+
+Here is a longer footnote with multiple paragraphs[^bignote].
+
+[^1]: This is the first footnote.
+[^bignote]: Here's one with multiple blocks.
+
+Subsequent paragraphs are indented to show that they belong to the previous footnote.
+
+```python
+print("Code in a footnote!")
+```
+
+---
+
+## 13. Escaping Characters
+
+You can use a backslash `\` to escape Markdown formatting characters:
+
+*This should not be italicized*
+# This should not be a heading
+[This should not be a link](http://example.com)
+`This should not be code`
+
+---
+
+## 14. Definition Lists (Extended Markdown / PHP Markdown Extra)
+
+Term 1
+: Definition 1
+
+Term 2
+: Definition 2a
+: Definition 2b
