@@ -3,6 +3,15 @@ import { marked } from "marked";
 import { markedHighlight } from "marked-highlight";
 import hljs from "highlight.js";
 import DOMPurify from "dompurify";
+import {
+  SunIcon,
+  MoonIcon,
+  BoldIcon,
+  ItalicIcon,
+  LinkIcon,
+  CodeBracketIcon,
+  DocumentDuplicateIcon,
+} from "./icons.jsx";
 import "highlight.js/styles/atom-one-dark.css";
 import "./index.css";
 
@@ -96,19 +105,17 @@ function App() {
   const charCount = getPlainText(markdown).length;
   const html = DOMPurify.sanitize(marked.parse(markdown));
 
-  const btnBase =
-    "px-2 py-1 rounded text-sm font-mono font-semibold transition-opacity disabled:opacity-30 disabled:cursor-not-allowed";
   const btnTheme = isDarkMode
     ? "bg-gray-600 text-gray-100 hover:bg-gray-500"
     : "bg-gray-200 text-gray-800 hover:bg-gray-300";
 
   const toolbarButtons = [
-    { label: "B", title: "Bold", handler: () => formatSelectedText("**", "**") },
-    { label: "I", title: "Italic", handler: () => formatSelectedText("_", "_") },
-    { label: "H1", title: "Heading", handler: () => formatSelectedText("# ") },
-    { label: "Link", title: "Link", handler: () => formatSelectedText("[", "](url)") },
-    { label: "\`code\`", title: "Inline code", handler: () => formatSelectedText("\`", "\`") },
-    { label: "\`\`\`", title: "Code block", handler: () => formatSelectedText("\n\`\`\`\n", "\n\`\`\`\n") },
+    { icon: BoldIcon, title: "Bold", handler: () => formatSelectedText("**", "**") },
+    { icon: ItalicIcon, title: "Italic", handler: () => formatSelectedText("_", "_") },
+    { icon: DocumentDuplicateIcon, title: "Heading", handler: () => formatSelectedText("# ") },
+    { icon: LinkIcon, title: "Link", handler: () => formatSelectedText("[", "](url)") },
+    { icon: CodeBracketIcon, title: "Inline code", handler: () => formatSelectedText("`", "`") },
+    { icon: DocumentDuplicateIcon, title: "Code block", handler: () => formatSelectedText("\n```\n", "\n```\n") },
   ];
 
   return (
@@ -127,29 +134,33 @@ function App() {
       >
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className={btnBase + " " + btnTheme + " mr-2"}
-          aria-label="Toggle dark mode"
+          className={`p-2 rounded transition-colors ${btnTheme} mr-1`}
+          aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
         >
-          {isDarkMode ? "Light" : "Dark"}
+          {isDarkMode
+            ? <SunIcon className="h-5 w-5 text-yellow-400" />
+            : <MoonIcon className="h-5 w-5 text-blue-500" />
+          }
         </button>
 
-        {toolbarButtons.map(({ label, title, handler }) => (
+        {toolbarButtons.map(({ icon: Icon, title, handler }) => (
           <button
             key={title}
             onClick={handler}
             disabled={!isTextSelected}
             title={title}
-            className={btnBase + " " + btnTheme}
+            aria-label={title}
+            className={`p-2 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
           >
-            {label}
+            <Icon className="h-5 w-5" />
           </button>
         ))}
 
         <div className="flex items-center gap-1 ml-2">
-          <button onClick={saveToFile} className={btnBase + " " + btnTheme}>
+          <button onClick={saveToFile} className={`px-3 py-1 rounded text-sm font-medium transition-colors ${btnTheme}`}>
             Save
           </button>
-          <label className={btnBase + " " + btnTheme + " cursor-pointer"}>
+          <label className={`px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${btnTheme}`}>
             Load
             <input
               type="file"

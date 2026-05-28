@@ -20,11 +20,10 @@ test('typing in the textarea updates the preview', () => {
   expect(preview.innerHTML).toContain('<strong>');
 });
 
-test('dark mode toggle switches label', () => {
+test('dark mode toggle switches aria-label', () => {
   render(<App />);
-  const toggle = screen.getByLabelText('Toggle dark mode');
-  expect(toggle).toHaveTextContent('Dark');
+  const toggle = screen.getByLabelText('Switch to dark mode');
   fireEvent.click(toggle);
-  expect(toggle).toHaveTextContent('Light');
+  expect(screen.getByLabelText('Switch to light mode')).toBeInTheDocument();
 });
 
