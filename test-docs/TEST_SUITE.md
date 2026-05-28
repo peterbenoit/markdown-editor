@@ -1,4 +1,4 @@
-markdown_content = """---
+---
 title: Comprehensive Markdown Test Suite
 description: A complete file containing various Markdown and GFM (GitHub Flavored Markdown) elements for testing parsers and renderers.
 author: Peter Benoit

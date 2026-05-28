@@ -1,4 +1,4 @@
-markdown_content = """---
+---
 title: Sample Markdown file with a variety of non-standard elements
 description: Sample Markdown file with a variety of non-standard elements
 author: Peter Benoit
