@@ -249,22 +249,19 @@ function App() {
           }
         >
           {meta && (
-            <dl
+            <pre
+              aria-label="Document metadata"
               className={
-                "mb-4 p-3 rounded text-xs border grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 " +
+                "mb-4 p-3 rounded text-xs border font-mono leading-relaxed opacity-60 select-none overflow-x-auto " +
                 (isDarkMode
-                  ? "bg-gray-700 border-gray-600 text-gray-300"
+                  ? "bg-gray-900 border-gray-700 text-gray-400"
                   : "bg-gray-50 border-gray-200 text-gray-500")
               }
-              aria-label="Document metadata"
             >
-              {Object.entries(meta).map(([k, v]) => (
-                <React.Fragment key={k}>
-                  <dt className="font-semibold capitalize">{k}</dt>
-                  <dd>{v}</dd>
-                </React.Fragment>
-              ))}
-            </dl>
+              {"---\n"}
+              {Object.entries(meta).map(([k, v]) => `${k}: ${v}\n`).join("")}
+              {"---"}
+            </pre>
           )}
           <div dangerouslySetInnerHTML={{ __html: html }} />
         </div>
