@@ -152,10 +152,32 @@ function App() {
     { icon: CodeBracketIcon, title: "Code block", handler: () => formatSelectedText("\n```\n", "\n```\n") },
   ];
 
+  const insertHeading = (prefix) => {
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = markdown.slice(start, end);
+    if (!selectedText) return;
+
+    const leadingSpaces = selectedText.match(/^\s*/)[0];
+    const trailingSpaces = selectedText.match(/\s*$/)[0];
+    const trimmed = selectedText.trim().replace(/^#{1,6}\s+/, "");
+
+    setMarkdown(
+      markdown.slice(0, start) +
+        leadingSpaces +
+        prefix +
+        trimmed +
+        trailingSpaces +
+        markdown.slice(end)
+    );
+    textarea.focus();
+  };
+
   const headingButtons = [
-    { label: "H1", handler: () => formatSelectedText("# ") },
-    { label: "H2", handler: () => formatSelectedText("## ") },
-    { label: "H3", handler: () => formatSelectedText("### ") },
+    { label: "H1", handler: () => insertHeading("# ") },
+    { label: "H2", handler: () => insertHeading("## ") },
+    { label: "H3", handler: () => insertHeading("### ") },
   ];
 
   return (
