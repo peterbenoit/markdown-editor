@@ -26,7 +26,7 @@ marked.use(
 );
 
 function parseFrontmatter(text) {
-  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  const match = text.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?/);
   if (!match) return { meta: null, body: text };
   const raw = match[1];
   const meta = {};
@@ -37,6 +37,8 @@ function parseFrontmatter(text) {
     const value = line.slice(colon + 1).trim();
     if (key) meta[key] = value;
   }
+  // If no valid key: value pairs were found, it's not frontmatter — pass through as-is
+  if (Object.keys(meta).length === 0) return { meta: null, body: text };
   return { meta, body: text.slice(match[0].length) };
 }
 
