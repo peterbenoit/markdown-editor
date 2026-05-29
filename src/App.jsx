@@ -53,6 +53,7 @@ function App() {
   const [fontSize, setFontSize] = useState(14); // px
   const FONT_SIZES = [11, 12, 13, 14, 16, 18, 20];
   const [storageWarning, setStorageWarning] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const textareaRef = useRef(null);
   const previewRef = useRef(null);
   const syncingRef = useRef(false);
@@ -144,6 +145,17 @@ function App() {
     link.download = "markdown.md";
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const clearEditor = () => {
+    if (!confirmClear) {
+      setConfirmClear(true);
+      setTimeout(() => setConfirmClear(false), 3000);
+      return;
+    }
+    setMarkdown("");
+    setConfirmClear(false);
+    textareaRef.current?.focus();
   };
 
   const loadFromFile = (e) => {
@@ -308,6 +320,19 @@ function App() {
             Load
             <input type="file" accept=".md,.txt" onChange={loadFromFile} className="sr-only" />
           </label>
+          <button
+            onClick={clearEditor}
+            disabled={!markdown}
+            title={confirmClear ? "Click again to confirm" : "Clear editor"}
+            aria-label={confirmClear ? "Confirm clear" : "Clear editor"}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+              confirmClear
+                ? "bg-red-500 text-white hover:bg-red-600"
+                : btnTheme
+            }`}
+          >
+            {confirmClear ? "Sure?" : "Clear"}
+          </button>
 
           <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
 
