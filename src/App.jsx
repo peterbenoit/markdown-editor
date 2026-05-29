@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
-import { markedHighlight } from "marked-highlight";
 import hljs from "highlight.js";
 import DOMPurify from "dompurify";
 import {
@@ -15,15 +14,18 @@ import {
 import "highlight.js/styles/atom-one-dark.css";
 import "./index.css";
 
-marked.use(
-  markedHighlight({
-    langPrefix: "hljs language-",
-    highlight(code, lang) {
-      const language = hljs.getLanguage(lang) ? lang : "plaintext";
-      return hljs.highlight(code, { language }).value;
+marked.use({
+  renderer: {
+    code({ text, lang }) {
+      const validLang = lang && hljs.getLanguage(lang) ? lang : null;
+      const content = validLang
+        ? hljs.highlight(text, { language: validLang }).value
+        : text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const label = validLang || "text";
+      return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-lang-label">${label}</span><button class="code-copy-btn">Copy</button></div><pre><code class="hljs${validLang ? ` language-${validLang}` : ""}">${content}</code></pre></div>`;
     },
-  })
-);
+  },
+});
 
 function parseFrontmatter(text) {
   const match = text.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?/);
@@ -162,6 +164,20 @@ function App() {
       .replace(/^#{1,6}\s+/gm, "")
       .replace(/^\s*[\r\n]/gm, "");
 
+  const handleCopyClick = (e) => {
+    const btn = e.target.closest(".code-copy-btn");
+    if (!btn) return;
+    const code = btn.closest(".code-block-wrapper")?.querySelector("code");
+    if (!code) return;
+    navigator.clipboard.writeText(code.textContent).then(() => {
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = "Copy"; }, 2000);
+    }).catch(() => {
+      btn.textContent = "Error";
+      setTimeout(() => { btn.textContent = "Copy"; }, 2000);
+    });
+  };
+
   const handleEditorScroll = () => {
     if (syncingRef.current) return;
     const editor = textareaRef.current;
@@ -187,7 +203,7 @@ function App() {
   const wordCount = markdown.split(/\s+/).filter(Boolean).length;
   const charCount = getPlainText(markdown).length;
   const { meta, body } = parseFrontmatter(markdown);
-  const html = DOMPurify.sanitize(marked.parse(body));
+  const html = DOMPurify.sanitize(marked.parse(body), { ADD_TAGS: ["button"] });
 
   const btnTheme = isDarkMode
     ? "bg-gray-600 text-gray-100 hover:bg-gray-500"
@@ -393,6 +409,7 @@ function App() {
           <div
             ref={previewRef}
             onScroll={handlePreviewScroll}
+            onClick={handleCopyClick}
             className={
               (viewMode === "split" ? "w-1/2 border-l " : "w-full ") +
               "p-4 overflow-y-auto markdown-content " +

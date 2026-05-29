@@ -92,8 +92,8 @@ textarea:focus-visible {
 
 /* Code blocks — hljs handles its own background; just fix spacing */
 .markdown-content pre {
-	margin: 1em 0;
-	border-radius: 6px;
+	margin: 0;
+	border-radius: 0;
 	overflow-x: auto;
 }
 
@@ -102,6 +102,54 @@ textarea:focus-visible {
 	padding: 0;
 	border-radius: 0;
 	font-size: 0.875em;
+}
+
+/* Code block wrapper (language label + copy button) */
+.code-block-wrapper {
+	margin: 1em 0;
+	border-radius: 8px;
+	overflow: hidden;
+	border: 1px solid #374151;
+}
+
+.code-block-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.3rem 0.75rem;
+	background-color: #1a1d23;
+	border-bottom: 1px solid #374151;
+}
+
+.code-lang-label {
+	font-family: monospace;
+	font-size: 0.7rem;
+	color: #6b7280;
+	text-transform: lowercase;
+	letter-spacing: 0.05em;
+}
+
+.code-copy-btn {
+	font-size: 0.7rem;
+	padding: 0.15rem 0.5rem;
+	border-radius: 4px;
+	border: 1px solid #4b5563;
+	background: transparent;
+	color: #9ca3af;
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+	line-height: 1.4;
+}
+
+.code-copy-btn:hover {
+	background: #374151;
+	color: #e5e7eb;
+}
+
+.code-block-wrapper pre {
+	margin: 0;
+	border-radius: 0;
+	padding: 1rem;
 }
 
 /* Tables */
