@@ -147,6 +147,44 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  const exportToHtml = () => {
+    const title = meta?.title || "Exported Document";
+    const doc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1f2937; }
+  h1,h2,h3,h4,h5,h6 { margin: 1em 0 0.5em; font-weight: bold; line-height: 1.25; }
+  h1 { font-size: 2em; } h2 { font-size: 1.5em; } h3 { font-size: 1.25em; }
+  pre { background: #1e1e2e; color: #cdd6f4; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+  code { font-family: monospace; }
+  :not(pre) > code { background: #f0f0f0; padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.875em; }
+  blockquote { margin: 1em 0; padding: 0.5em 1em; border-left: 4px solid #d1d5db; color: #6b7280; font-style: italic; }
+  table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+  th, td { padding: 0.5em 0.75em; border: 1px solid #d1d5db; }
+  th { background: #f3f4f6; font-weight: 600; }
+  img { max-width: 100%; height: auto; }
+  a { color: #2563eb; }
+  hr { border: none; border-top: 1px solid #d1d5db; margin: 1.5em 0; }
+  .code-block-header { display:none; }
+</style>
+</head>
+<body>
+${html}
+</body>
+</html>`;
+    const blob = new Blob([doc], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${title.toLowerCase().replace(/\s+/g, "-")}.html`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const clearEditor = () => {
     if (!confirmClear) {
       setConfirmClear(true);
@@ -315,6 +353,9 @@ function App() {
 
           <button onClick={saveToFile} className={`px-2 py-1 rounded text-xs font-medium transition-colors ${btnTheme}`}>
             Save
+          </button>
+          <button onClick={exportToHtml} disabled={!markdown} className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
+            Export
           </button>
           <label className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${btnTheme}`}>
             Load
