@@ -48,6 +48,8 @@ function App() {
   const [isTextSelected, setIsTextSelected] = useState(false);
   const [viewMode, setViewMode] = useState("split"); // 'editor' | 'split' | 'preview'
   const [cursor, setCursor] = useState({ line: 1, col: 1 });
+  const [fontSize, setFontSize] = useState(14); // px
+  const FONT_SIZES = [11, 12, 13, 14, 16, 18, 20];
   const textareaRef = useRef(null);
   const previewRef = useRef(null);
   const syncingRef = useRef(false);
@@ -282,6 +284,27 @@ function App() {
             Load
             <input type="file" accept=".md,.txt" onChange={loadFromFile} className="sr-only" />
           </label>
+
+          <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
+
+          {/* Font size control */}
+          <div className="flex items-center gap-0.5" role="group" aria-label="Editor font size">
+            <button
+              onClick={() => setFontSize(s => FONT_SIZES[Math.max(0, FONT_SIZES.indexOf(s) - 1)])}
+              disabled={fontSize === FONT_SIZES[0]}
+              title="Decrease font size"
+              aria-label="Decrease editor font size"
+              className={`px-1.5 py-0.5 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
+            >A−</button>
+            <span className={"text-xs tabular-nums " + (isDarkMode ? "text-gray-400" : "text-gray-500")} aria-live="polite" aria-atomic="true">{fontSize}px</span>
+            <button
+              onClick={() => setFontSize(s => FONT_SIZES[Math.min(FONT_SIZES.length - 1, FONT_SIZES.indexOf(s) + 1)])}
+              disabled={fontSize === FONT_SIZES[FONT_SIZES.length - 1]}
+              title="Increase font size"
+              aria-label="Increase editor font size"
+              className={`px-1.5 py-0.5 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
+            >A+</button>
+          </div>
         </div>
 
         {/* View mode toggle */}
@@ -343,14 +366,17 @@ function App() {
             ref={textareaRef}
             className={
               (viewMode === "split" ? "w-1/2" : "w-full") +
-              " p-4 resize-none font-mono text-sm h-full focus:outline-none " +
+              " p-4 resize-none font-mono h-full focus:outline-none " +
               (isDarkMode ? "bg-gray-700 text-white" : "bg-gray-50 text-gray-900")
             }
+            style={{ fontSize: `${fontSize}px` }}
             value={markdown}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            onSelect={checkTextSelection}          onClick={updateCursor}
-          onKeyUp={updateCursor}            onScroll={handleEditorScroll}
+            onSelect={checkTextSelection}
+            onClick={updateCursor}
+            onKeyUp={updateCursor}
+            onScroll={handleEditorScroll}
             placeholder="Enter Markdown here..."
             spellCheck="false"
           />
