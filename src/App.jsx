@@ -47,6 +47,8 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isTextSelected, setIsTextSelected] = useState(false);
   const textareaRef = useRef(null);
+  const previewRef = useRef(null);
+  const syncingRef = useRef(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("markdown");
@@ -136,6 +138,28 @@ function App() {
       .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
       .replace(/^#{1,6}\s+/gm, "")
       .replace(/^\s*[\r\n]/gm, "");
+
+  const handleEditorScroll = () => {
+    if (syncingRef.current) return;
+    const editor = textareaRef.current;
+    const preview = previewRef.current;
+    if (!editor || !preview) return;
+    const ratio = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+    syncingRef.current = true;
+    preview.scrollTop = ratio * (preview.scrollHeight - preview.clientHeight);
+    requestAnimationFrame(() => { syncingRef.current = false; });
+  };
+
+  const handlePreviewScroll = () => {
+    if (syncingRef.current) return;
+    const editor = textareaRef.current;
+    const preview = previewRef.current;
+    if (!editor || !preview) return;
+    const ratio = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
+    syncingRef.current = true;
+    editor.scrollTop = ratio * (editor.scrollHeight - editor.clientHeight);
+    requestAnimationFrame(() => { syncingRef.current = false; });
+  };
 
   const wordCount = markdown.split(/\s+/).filter(Boolean).length;
   const charCount = getPlainText(markdown).length;
@@ -283,10 +307,13 @@ function App() {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onSelect={checkTextSelection}
+          onScroll={handleEditorScroll}
           placeholder="Enter Markdown here..."
           spellCheck="false"
         />
         <div
+          ref={previewRef}
+          onScroll={handlePreviewScroll}
           className={
             "w-1/2 p-4 border-l overflow-y-auto markdown-content " +
             (isDarkMode
