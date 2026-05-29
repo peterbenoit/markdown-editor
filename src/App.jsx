@@ -50,6 +50,7 @@ function App() {
   const [cursor, setCursor] = useState({ line: 1, col: 1 });
   const [fontSize, setFontSize] = useState(14); // px
   const FONT_SIZES = [11, 12, 13, 14, 16, 18, 20];
+  const [storageWarning, setStorageWarning] = useState(false);
   const textareaRef = useRef(null);
   const previewRef = useRef(null);
   const syncingRef = useRef(false);
@@ -60,7 +61,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("markdown", markdown);
+    try {
+      localStorage.setItem("markdown", markdown);
+      // Warn if stored content exceeds 4MB (leaving buffer before ~5MB browser cap)
+      const bytes = new Blob([markdown]).size;
+      setStorageWarning(bytes > 4 * 1024 * 1024);
+    } catch {
+      setStorageWarning(true);
+    }
   }, [markdown]);
 
   const formatSelectedText = (before, after = "") => {
@@ -427,6 +435,12 @@ function App() {
           <span>Characters: {charCount}</span>
           <span className="mx-2">·</span>
           <span>Ln {cursor.line}, Col {cursor.col}</span>
+          {storageWarning && (
+            <>
+              <span className="mx-2">·</span>
+              <span className="text-amber-500 font-medium" role="alert">Storage nearly full — save to file</span>
+            </>
+          )}
         </span>
         <span>
           Built by{" "}
