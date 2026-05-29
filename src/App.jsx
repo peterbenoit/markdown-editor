@@ -47,6 +47,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isTextSelected, setIsTextSelected] = useState(false);
   const [viewMode, setViewMode] = useState("split"); // 'editor' | 'split' | 'preview'
+  const [cursor, setCursor] = useState({ line: 1, col: 1 });
   const textareaRef = useRef(null);
   const previewRef = useRef(null);
   const syncingRef = useRef(false);
@@ -102,9 +103,20 @@ function App() {
     }
   };
 
+  const updateCursor = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const pos = textarea.selectionStart;
+    const before = textarea.value.slice(0, pos);
+    const line = before.split("\n").length;
+    const col = pos - before.lastIndexOf("\n");
+    setCursor({ line, col });
+  };
+
   const checkTextSelection = () => {
     const textarea = textareaRef.current;
     setIsTextSelected(textarea.selectionStart !== textarea.selectionEnd);
+    updateCursor();
   };
 
   const handleChange = (e) => {
@@ -211,8 +223,8 @@ function App() {
     <div
       className={
         isDarkMode
-          ? "bg-gray-800 text-white dark-theme min-h-screen grid grid-rows-[auto,1fr,auto]"
-          : "bg-white text-gray-900 light-theme min-h-screen grid grid-rows-[auto,1fr,auto]"
+          ? "bg-gray-800 text-white dark-theme h-screen grid grid-rows-[auto,1fr,auto]"
+          : "bg-white text-gray-900 light-theme h-screen grid grid-rows-[auto,1fr,auto]"
       }
     >
       <header
@@ -337,8 +349,8 @@ function App() {
             value={markdown}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            onSelect={checkTextSelection}
-            onScroll={handleEditorScroll}
+            onSelect={checkTextSelection}          onClick={updateCursor}
+          onKeyUp={updateCursor}            onScroll={handleEditorScroll}
             placeholder="Enter Markdown here..."
             spellCheck="false"
           />
@@ -387,6 +399,8 @@ function App() {
           <span>Words: {wordCount}</span>
           <span className="mx-2">·</span>
           <span>Characters: {charCount}</span>
+          <span className="mx-2">·</span>
+          <span>Ln {cursor.line}, Col {cursor.col}</span>
         </span>
         <span>
           Built by{" "}
