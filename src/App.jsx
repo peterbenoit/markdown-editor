@@ -46,6 +46,7 @@ function App() {
   const [markdown, setMarkdown] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isTextSelected, setIsTextSelected] = useState(false);
+  const [viewMode, setViewMode] = useState("split"); // 'editor' | 'split' | 'preview'
   const textareaRef = useRef(null);
   const previewRef = useRef(null);
   const syncingRef = useRef(false);
@@ -271,6 +272,34 @@ function App() {
           </label>
         </div>
 
+        {/* View mode toggle */}
+        <div
+          className={"flex items-center rounded overflow-hidden border shrink-0 " + (isDarkMode ? "border-gray-600" : "border-gray-300")}
+          role="group"
+          aria-label="View mode"
+        >
+          {[
+            { id: "editor", label: "Editor" },
+            { id: "split",  label: "Split" },
+            { id: "preview", label: "Preview" },
+          ].map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setViewMode(id)}
+              aria-pressed={viewMode === id}
+              title={`${label} view`}
+              className={
+                "px-2 py-1 text-xs font-medium transition-colors " +
+                (viewMode === id
+                  ? (isDarkMode ? "bg-gray-500 text-white" : "bg-gray-300 text-gray-900")
+                  : (isDarkMode ? "bg-gray-700 text-gray-300 hover:bg-gray-600" : "bg-white text-gray-600 hover:bg-gray-100"))
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* Right rail — theme toggle + GitHub */}
         <div className="flex items-center gap-1 shrink-0">
           <button
@@ -297,30 +326,35 @@ function App() {
       </header>
 
       <div className="flex overflow-hidden">
-        <textarea
-          ref={textareaRef}
-          className={
-            "w-1/2 p-4 resize-none font-mono text-sm h-full focus:outline-none " +
-            (isDarkMode ? "bg-gray-700 text-white" : "bg-gray-50 text-gray-900")
-          }
-          value={markdown}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onSelect={checkTextSelection}
-          onScroll={handleEditorScroll}
-          placeholder="Enter Markdown here..."
-          spellCheck="false"
-        />
-        <div
-          ref={previewRef}
-          onScroll={handlePreviewScroll}
-          className={
-            "w-1/2 p-4 border-l overflow-y-auto markdown-content " +
-            (isDarkMode
-              ? "bg-gray-800 text-white border-gray-600"
-              : "bg-white text-gray-900 border-gray-200")
-          }
-        >
+        {viewMode !== "preview" && (
+          <textarea
+            ref={textareaRef}
+            className={
+              (viewMode === "split" ? "w-1/2" : "w-full") +
+              " p-4 resize-none font-mono text-sm h-full focus:outline-none " +
+              (isDarkMode ? "bg-gray-700 text-white" : "bg-gray-50 text-gray-900")
+            }
+            value={markdown}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onSelect={checkTextSelection}
+            onScroll={handleEditorScroll}
+            placeholder="Enter Markdown here..."
+            spellCheck="false"
+          />
+        )}
+        {viewMode !== "editor" && (
+          <div
+            ref={previewRef}
+            onScroll={handlePreviewScroll}
+            className={
+              (viewMode === "split" ? "w-1/2 border-l " : "w-full ") +
+              "p-4 overflow-y-auto markdown-content " +
+              (isDarkMode
+                ? "bg-gray-800 text-white border-gray-600"
+                : "bg-white text-gray-900 border-gray-200")
+            }
+          >
           {meta && (
             <pre
               aria-label="Document metadata"
@@ -337,7 +371,8 @@ function App() {
             </pre>
           )}
           <div dangerouslySetInnerHTML={{ __html: html }} />
-        </div>
+          </div>
+        )}
       </div>
 
       <footer
