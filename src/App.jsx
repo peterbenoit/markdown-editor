@@ -313,7 +313,8 @@ ${html}
         "<"
       );
 
-  const html = DOMPurify.sanitize(applyTypography(marked.parse(body)), { ADD_TAGS: ["button"] });
+  const highlightedBody = body.replace(/==([^=\n]+)==/g, "<mark>$1</mark>");
+  const html = DOMPurify.sanitize(applyTypography(marked.parse(highlightedBody)), { ADD_TAGS: ["button", "mark"] });
 
   const btnTheme = isDarkMode
     ? "bg-gray-600 text-gray-100 hover:bg-gray-500"
