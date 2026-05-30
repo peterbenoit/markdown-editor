@@ -54,6 +54,12 @@ function App() {
   const FONT_SIZES = [11, 12, 13, 14, 16, 18, 20];
   const [storageWarning, setStorageWarning] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [versions, setVersions] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("md-versions") || "[]"); }
+    catch { return []; }
+  });
+  const [showVersions, setShowVersions] = useState(false);
+  const MAX_VERSIONS = 5;
   const textareaRef = useRef(null);
   const previewRef = useRef(null);
   const syncingRef = useRef(false);
@@ -183,6 +189,30 @@ ${html}
     link.download = `${title.toLowerCase().replace(/\s+/g, "-")}.html`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const saveVersion = () => {
+    if (!markdown) return;
+    const snap = {
+      id: Date.now(),
+      ts: new Date().toLocaleString(),
+      preview: markdown.slice(0, 60).replace(/\n/g, " "),
+      content: markdown,
+    };
+    const next = [snap, ...versions].slice(0, MAX_VERSIONS);
+    setVersions(next);
+    try { localStorage.setItem("md-versions", JSON.stringify(next)); } catch { /* quota */ }
+  };
+
+  const loadVersion = (v) => {
+    setMarkdown(v.content);
+    setShowVersions(false);
+  };
+
+  const deleteVersion = (id) => {
+    const next = versions.filter(v => v.id !== id);
+    setVersions(next);
+    localStorage.setItem("md-versions", JSON.stringify(next));
   };
 
   const clearEditor = () => {
@@ -361,19 +391,66 @@ ${html}
             Load
             <input type="file" accept=".md,.txt" onChange={loadFromFile} className="sr-only" />
           </label>
-          <button
-            onClick={clearEditor}
+          <button onClick={clearEditor}
             disabled={!markdown}
             title={confirmClear ? "Click again to confirm" : "Clear editor"}
             aria-label={confirmClear ? "Confirm clear" : "Clear editor"}
             className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
-              confirmClear
-                ? "bg-red-500 text-white hover:bg-red-600"
-                : btnTheme
+              confirmClear ? "bg-red-500 text-white hover:bg-red-600" : btnTheme
             }`}
           >
             {confirmClear ? "Sure?" : "Clear"}
           </button>
+
+          {/* Version snapshots */}
+          <div className="relative">
+            <button
+              onClick={() => setShowVersions(v => !v)}
+              title="Saved snapshots"
+              aria-label="Saved snapshots"
+              aria-expanded={showVersions}
+              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${btnTheme}`}
+            >
+              Snapshots{versions.length > 0 ? ` (${versions.length})` : ""}
+            </button>
+            {showVersions && (
+              <div
+                className={
+                  "absolute top-full left-0 mt-1 z-20 rounded shadow-lg border min-w-[260px] " +
+                  (isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200")
+                }
+                role="dialog"
+                aria-label="Version snapshots"
+              >
+                <div className={"flex items-center justify-between px-3 py-2 border-b text-xs font-medium " + (isDarkMode ? "border-gray-700 text-gray-300" : "border-gray-200 text-gray-600")}>
+                  <span>Snapshots ({versions.length}/{MAX_VERSIONS})</span>
+                  <button
+                    onClick={saveVersion}
+                    disabled={!markdown || versions.length >= MAX_VERSIONS}
+                    className="px-2 py-0.5 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    + Save current
+                  </button>
+                </div>
+                {versions.length === 0 ? (
+                  <p className={"px-3 py-3 text-xs " + (isDarkMode ? "text-gray-500" : "text-gray-400")}>No snapshots yet.</p>
+                ) : (
+                  <ul>
+                    {versions.map(v => (
+                      <li key={v.id} className={"flex items-center gap-2 px-3 py-2 border-b last:border-0 " + (isDarkMode ? "border-gray-700" : "border-gray-100")}>
+                        <div className="flex-1 min-w-0">
+                          <div className={"text-[0.65rem] " + (isDarkMode ? "text-gray-500" : "text-gray-400")}>{v.ts}</div>
+                          <div className={"text-xs truncate " + (isDarkMode ? "text-gray-300" : "text-gray-700")}>{v.preview || "(empty)"}</div>
+                        </div>
+                        <button onClick={() => loadVersion(v)} className="shrink-0 text-xs px-2 py-0.5 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors">Load</button>
+                        <button onClick={() => deleteVersion(v.id)} className="shrink-0 text-xs px-2 py-0.5 rounded bg-red-500 text-white hover:bg-red-600 transition-colors" aria-label="Delete snapshot">✕</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
 
           <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
 
