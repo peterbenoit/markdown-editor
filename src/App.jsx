@@ -293,7 +293,27 @@ ${html}
   const wordCount = markdown.split(/\s+/).filter(Boolean).length;
   const charCount = getPlainText(markdown).length;
   const { meta, body } = parseFrontmatter(markdown);
-  const html = DOMPurify.sanitize(marked.parse(body), { ADD_TAGS: ["button"] });
+
+  const applyTypography = (rawHtml) =>
+    rawHtml
+      // Run replacements only outside HTML tags by splitting on them
+      .replace(/>([^<]*)</g, (_, text) =>
+        ">" +
+        text
+          .replace(/\.\.\./g, "\u2026")
+          .replace(/---/g, "\u2014")
+          .replace(/--/g, "\u2013")
+          .replace(/\(c\)/gi, "\u00a9")
+          .replace(/\(r\)/gi, "\u00ae")
+          .replace(/\(tm\)/gi, "\u2122")
+          .replace(/(\s|^)"(\S)/g, "$1\u201c$2")
+          .replace(/(\S)"(\s|$)/g, "$1\u201d$2")
+          .replace(/(\s|^)'(\S)/g, "$1\u2018$2")
+          .replace(/(\S)'(\s|$)/g, "$1\u2019$2") +
+        "<"
+      );
+
+  const html = DOMPurify.sanitize(applyTypography(marked.parse(body)), { ADD_TAGS: ["button"] });
 
   const btnTheme = isDarkMode
     ? "bg-gray-600 text-gray-100 hover:bg-gray-500"

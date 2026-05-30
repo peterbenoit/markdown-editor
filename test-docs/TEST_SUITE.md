@@ -302,3 +302,17 @@ Term 1
 Term 2
 : Definition 2a
 : Definition 2b
+
+## Typographic Replacements
+
+`...` becomes ellipsis: ...
+
+`--` becomes en dash: --
+
+`---` becomes em dash: ---
+
+`(c)` becomes copyright: (c)
+
+`(r)` becomes registered: (r)
+
+`(tm)` becomes trademark: (tm)
