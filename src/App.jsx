@@ -30,9 +30,10 @@ marked.use({
       const label = validLang || "text";
       return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-lang-label">${label}</span><button class="code-copy-btn">Copy</button></div><pre><code class="hljs${validLang ? ` language-${validLang}` : ""}">${content}</code></pre></div>`;
     },
-    listitem({ text, task, checked }) {
-      if (task) {
-        const box = checked
+    listitem(token) {
+      const text = this.parser.parseInline(token.tokens);
+      if (token.task) {
+        const box = token.checked
           ? `<input type="checkbox" checked disabled class="task-checkbox"> `
           : `<input type="checkbox" disabled class="task-checkbox"> `;
         return `<li class="task-list-item">${box}${text}</li>\n`;
@@ -305,17 +306,10 @@ ${html}
   const { meta, body } = parseFrontmatter(markdown);
 
   const applyTypography = (rawHtml) => {
-    // Step 1: pull out all <pre>…</pre> and <code>…</code> blocks and replace
-    // with placeholders so typography replacements never touch code content.
-    const protected_ = [];
-    const safe = rawHtml.replace(
-      /<(pre|code)(\s[^>]*)?>[\s\S]*?<\/\1>/gi,
-      (match) => { protected_.push(match); return `\x02${protected_.length - 1}\x03`; }
-    );
+    const template = document.createElement("template");
+    template.innerHTML = rawHtml;
 
-    // Step 2: apply typography only to text nodes (content between HTML tags)
-    const processed = safe.replace(/>([^<]*)</g, (_, text) =>
-      ">" +
+    const transformText = (text) =>
       text
         .replace(/\.\.\./g, "\u2026")
         .replace(/---/g, "\u2014")
@@ -341,12 +335,29 @@ ${html}
         .replace(/(^|\s)(:\||:-\|)(?=\s|$)/g, "$1😐")
         .replace(/(^|\s)(:o|:-o|:O|:-O)(?=\s|$)/g, "$1😮")
         .replace(/(^|\s)(&lt;3)(?=\s|$)/g, "$1❤️")
-        .replace(/(^|\s)(&lt;\/3)(?=\s|$)/g, "$1💔") +
-      "<"
+        .replace(/(^|\s)(&lt;\/3)(?=\s|$)/g, "$1💔");
+
+    const nodeFilter = document.defaultView.NodeFilter;
+    const walker = document.createTreeWalker(
+      template.content,
+      nodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          const parent = node.parentElement;
+          return parent?.closest("code, pre")
+            ? nodeFilter.FILTER_REJECT
+            : nodeFilter.FILTER_ACCEPT;
+        },
+      }
     );
 
-    // Step 3: restore code blocks verbatim
-    return processed.replace(/\x02(\d+)\x03/g, (_, i) => protected_[Number(i)]);
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+    textNodes.forEach((node) => {
+      node.nodeValue = transformText(node.nodeValue);
+    });
+
+    return template.innerHTML;
   };
 
   const highlightedBody = body.replace(/==([^=\n]+)==/g, "<mark>$1</mark>");
