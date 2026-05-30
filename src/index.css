@@ -207,6 +207,18 @@ textarea:focus-visible {
 	height: auto;
 }
 
+/* Task lists */
+.markdown-content .task-list-item {
+	list-style: none;
+	margin-left: -1.25em;
+}
+
+.markdown-content .task-checkbox {
+	margin-right: 0.4em;
+	vertical-align: middle;
+	accent-color: #2563eb;
+}
+
 /* Links */
 .markdown-content a {
 	color: #2563eb;

@@ -15,6 +15,7 @@ import "highlight.js/styles/atom-one-dark.css";
 import "./index.css";
 
 marked.use({
+  gfm: true,
   renderer: {
     code({ text, lang }) {
       const validLang = lang && hljs.getLanguage(lang) ? lang : null;
@@ -23,6 +24,15 @@ marked.use({
         : text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       const label = validLang || "text";
       return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-lang-label">${label}</span><button class="code-copy-btn">Copy</button></div><pre><code class="hljs${validLang ? ` language-${validLang}` : ""}">${content}</code></pre></div>`;
+    },
+    listitem({ text, task, checked }) {
+      if (task) {
+        const box = checked
+          ? `<input type="checkbox" checked disabled class="task-checkbox"> `
+          : `<input type="checkbox" disabled class="task-checkbox"> `;
+        return `<li class="task-list-item">${box}${text}</li>\n`;
+      }
+      return `<li>${text}</li>\n`;
     },
   },
 });
