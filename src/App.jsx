@@ -304,39 +304,50 @@ ${html}
   const charCount = getPlainText(markdown).length;
   const { meta, body } = parseFrontmatter(markdown);
 
-  const applyTypography = (rawHtml) =>
-    rawHtml
-      // Run replacements only outside HTML tags by splitting on them
-      .replace(/>([^<]*)</g, (_, text) =>
-        ">" +
-        text
-          .replace(/\.\.\./g, "\u2026")
-          .replace(/---/g, "\u2014")
-          .replace(/--/g, "\u2013")
-          .replace(/\(c\)/gi, "\u00a9")
-          .replace(/\(r\)/gi, "\u00ae")
-          .replace(/\(tm\)/gi, "\u2122")
-          .replace(/(\s|^)"(\S)/g, "$1\u201c$2")
-          .replace(/(\S)"(\s|$)/g, "$1\u201d$2")
-          .replace(/(\s|^)'(\S)/g, "$1\u2018$2")
-          .replace(/(\S)'(\s|$)/g, "$1\u2019$2")
-          .replace(/:([a-z0-9_+\-]+):/g, (match, code) => EMOJI_MAP[code] ?? match)
-          // Emoticons — require whitespace (or start/end) on both sides
-          // Note: marked encodes > as &gt; and < as &lt; in paragraph text
-          .replace(/(^|\s)(&gt;:\)|&gt;:-\))(?=\s|$)/g, "$1😈")
-          .replace(/(^|\s)(&gt;:\(|&gt;:-\()(?=\s|$)/g, "$1😠")
-          .replace(/(^|\s)(:\)|:-\)|=\))(?=\s|$)/g, "$1😊")
-          .replace(/(^|\s)(:\(|:-\(|=\()(?=\s|$)/g, "$1😞")
-          .replace(/(^|\s)(:D|:-D|=D)(?=\s|$)/g, "$1😄")
-          .replace(/(^|\s)(:P|:-P|=P)(?=\s|$)/g, "$1😛")
-          .replace(/(^|\s)(;\)|;-\))(?=\s|$)/g, "$1😉")
-          .replace(/(^|\s)(:\'\(|:'\(|:'-\()(?=\s|$)/g, "$1😢")
-          .replace(/(^|\s)(:\||:-\|)(?=\s|$)/g, "$1😐")
-          .replace(/(^|\s)(:o|:-o|:O|:-O)(?=\s|$)/g, "$1😮")
-          .replace(/(^|\s)(&lt;3)(?=\s|$)/g, "$1❤️")
-          .replace(/(^|\s)(&lt;\/3)(?=\s|$)/g, "$1💔") +
-        "<"
-      );
+  const applyTypography = (rawHtml) => {
+    // Step 1: pull out all <pre>…</pre> and <code>…</code> blocks and replace
+    // with placeholders so typography replacements never touch code content.
+    const protected_ = [];
+    const safe = rawHtml.replace(
+      /<(pre|code)(\s[^>]*)?>[\s\S]*?<\/\1>/gi,
+      (match) => { protected_.push(match); return `\x02${protected_.length - 1}\x03`; }
+    );
+
+    // Step 2: apply typography only to text nodes (content between HTML tags)
+    const processed = safe.replace(/>([^<]*)</g, (_, text) =>
+      ">" +
+      text
+        .replace(/\.\.\./g, "\u2026")
+        .replace(/---/g, "\u2014")
+        .replace(/--/g, "\u2013")
+        .replace(/\(c\)/gi, "\u00a9")
+        .replace(/\(r\)/gi, "\u00ae")
+        .replace(/\(tm\)/gi, "\u2122")
+        .replace(/(\s|^)"(\S)/g, "$1\u201c$2")
+        .replace(/(\S)"(\s|$)/g, "$1\u201d$2")
+        .replace(/(\s|^)'(\S)/g, "$1\u2018$2")
+        .replace(/(\S)'(\s|$)/g, "$1\u2019$2")
+        .replace(/:([a-z0-9_+\-]+):/g, (match, code) => EMOJI_MAP[code] ?? match)
+        // Emoticons — require whitespace (or start/end) on both sides
+        // Note: marked encodes > as &gt; and < as &lt; in paragraph text
+        .replace(/(^|\s)(&gt;:\)|&gt;:-\))(?=\s|$)/g, "$1😈")
+        .replace(/(^|\s)(&gt;:\(|&gt;:-\()(?=\s|$)/g, "$1😠")
+        .replace(/(^|\s)(:\)|:-\)|=\))(?=\s|$)/g, "$1😊")
+        .replace(/(^|\s)(:\(|:-\(|=\()(?=\s|$)/g, "$1😞")
+        .replace(/(^|\s)(:D|:-D|=D)(?=\s|$)/g, "$1😄")
+        .replace(/(^|\s)(:P|:-P|=P)(?=\s|$)/g, "$1😛")
+        .replace(/(^|\s)(;\)|;-\))(?=\s|$)/g, "$1😉")
+        .replace(/(^|\s)(:\'\(|:'\(|:'-\()(?=\s|$)/g, "$1😢")
+        .replace(/(^|\s)(:\||:-\|)(?=\s|$)/g, "$1😐")
+        .replace(/(^|\s)(:o|:-o|:O|:-O)(?=\s|$)/g, "$1😮")
+        .replace(/(^|\s)(&lt;3)(?=\s|$)/g, "$1❤️")
+        .replace(/(^|\s)(&lt;\/3)(?=\s|$)/g, "$1💔") +
+      "<"
+    );
+
+    // Step 3: restore code blocks verbatim
+    return processed.replace(/\x02(\d+)\x03/g, (_, i) => protected_[Number(i)]);
+  };
 
   const highlightedBody = body.replace(/==([^=\n]+)==/g, "<mark>$1</mark>");
   const html = DOMPurify.sanitize(applyTypography(marked.parse(highlightedBody)), { ADD_TAGS: ["button", "mark"] });
