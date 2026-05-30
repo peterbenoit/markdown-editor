@@ -101,16 +101,21 @@ function App() {
     const trailingSpaces = selectedText.match(/\s*$/)[0];
     const trimmedText = selectedText.trim();
 
-    setMarkdown(
+    const newText =
       markdown.slice(0, start) +
-        leadingSpaces +
-        before +
-        trimmedText +
-        after +
-        trailingSpaces +
-        markdown.slice(end)
-    );
-    textarea.focus();
+      leadingSpaces +
+      before +
+      trimmedText +
+      after +
+      trailingSpaces +
+      markdown.slice(end);
+    const newStart = start + leadingSpaces.length + before.length;
+    const newEnd = newStart + trimmedText.length;
+    setMarkdown(newText);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newStart, newEnd);
+    });
   };
 
   const handleKeyDown = (e) => {
@@ -339,15 +344,20 @@ ${html}
     const trailingSpaces = selectedText.match(/\s*$/)[0];
     const trimmed = selectedText.trim().replace(/^#{1,6}\s+/, "");
 
-    setMarkdown(
+    const newText =
       markdown.slice(0, start) +
-        leadingSpaces +
-        prefix +
-        trimmed +
-        trailingSpaces +
-        markdown.slice(end)
-    );
-    textarea.focus();
+      leadingSpaces +
+      prefix +
+      trimmed +
+      trailingSpaces +
+      markdown.slice(end);
+    const newStart = start + leadingSpaces.length + prefix.length;
+    const newEnd = newStart + trimmed.length;
+    setMarkdown(newText);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newStart, newEnd);
+    });
   };
 
   const headingButtons = [
