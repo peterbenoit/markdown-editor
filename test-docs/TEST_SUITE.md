@@ -303,6 +303,48 @@ Term 2
 : Definition 2a
 : Definition 2b
 
+## Emoji Shortcodes
+
+Shortcodes map to emoji: :rocket: :fire: :sparkles: :tada:
+
+Faces: :smile: :wink: :sob: :thinking: :sunglasses: :partying:
+
+Hands: :thumbsup: :clap: :pray: :muscle: :wave:
+
+Heart: :heart: :broken_heart: :orange_heart: :blue_heart:
+
+Tech: :computer: :bulb: :rocket: :wrench: :gear: :package:
+
+Fun: :pizza: :coffee: :unicorn: :bee: :rainbow: :trophy:
+
+Shortcodes that don't exist pass through unchanged: :fake_emoji:
+
+## Emoticons
+
+Happy: :-) :) =)
+
+Sad: :-( :( =(
+
+Grinning: :-D :D =D
+
+Tongue: :-P :P =P
+
+Wink: ;-) ;)
+
+Crying: :'-(
+
+Neutral: :| :-|
+
+Surprised: :-O :O
+
+Evil: >:) >:-)
+
+Angry: >:( >:-(
+
+Love: <3
+
+Heartbreak: </3
+
 ## Typographic Replacements
 
 `...` becomes ellipsis: ...

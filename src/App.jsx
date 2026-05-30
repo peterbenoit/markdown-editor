@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
+import { gemoji } from "gemoji";
 import hljs from "highlight.js";
 import DOMPurify from "dompurify";
 import {
@@ -13,6 +14,10 @@ import {
 } from "./icons.jsx";
 import "highlight.js/styles/atom-one-dark.css";
 import "./index.css";
+
+const EMOJI_MAP = Object.fromEntries(
+  gemoji.flatMap((e) => e.names.map((n) => [n, e.emoji]))
+);
 
 marked.use({
   gfm: true,
@@ -314,7 +319,21 @@ ${html}
           .replace(/(\s|^)"(\S)/g, "$1\u201c$2")
           .replace(/(\S)"(\s|$)/g, "$1\u201d$2")
           .replace(/(\s|^)'(\S)/g, "$1\u2018$2")
-          .replace(/(\S)'(\s|$)/g, "$1\u2019$2") +
+          .replace(/(\S)'(\s|$)/g, "$1\u2019$2")
+          .replace(/:([a-z0-9_+\-]+):/g, (match, code) => EMOJI_MAP[code] ?? match)
+          // Emoticons — require whitespace (or start/end) on both sides
+          .replace(/(^|\s)(>:\)|>:-\))(?=\s|$)/g, "$1😈")
+          .replace(/(^|\s)(>:\(|>:-\()(?=\s|$)/g, "$1😠")
+          .replace(/(^|\s)(:\)|:-\)|=\))(?=\s|$)/g, "$1😊")
+          .replace(/(^|\s)(:\(|:-\(|=\()(?=\s|$)/g, "$1😞")
+          .replace(/(^|\s)(:D|:-D|=D)(?=\s|$)/g, "$1😄")
+          .replace(/(^|\s)(:P|:-P|=P)(?=\s|$)/g, "$1😛")
+          .replace(/(^|\s)(;\)|;-\))(?=\s|$)/g, "$1😉")
+          .replace(/(^|\s)(:\'\(|:'-\()(?=\s|$)/g, "$1😢")
+          .replace(/(^|\s)(:\||:-\|)(?=\s|$)/g, "$1😐")
+          .replace(/(^|\s)(:o|:-o|:O|:-O)(?=\s|$)/g, "$1😮")
+          .replace(/(^|\s)(<3)(?=\s|$)/g, "$1❤️")
+          .replace(/(^|\s)(<\/3)(?=\s|$)/g, "$1💔") +
         "<"
       );
 
