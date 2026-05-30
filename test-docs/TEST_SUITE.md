@@ -331,7 +331,7 @@ Tongue: :-P :P =P
 
 Wink: ;-) ;)
 
-Crying: :'-(
+Crying: :'( :'-(
 
 Neutral: :| :-|
 

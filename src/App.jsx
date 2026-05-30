@@ -322,18 +322,19 @@ ${html}
           .replace(/(\S)'(\s|$)/g, "$1\u2019$2")
           .replace(/:([a-z0-9_+\-]+):/g, (match, code) => EMOJI_MAP[code] ?? match)
           // Emoticons — require whitespace (or start/end) on both sides
-          .replace(/(^|\s)(>:\)|>:-\))(?=\s|$)/g, "$1😈")
-          .replace(/(^|\s)(>:\(|>:-\()(?=\s|$)/g, "$1😠")
+          // Note: marked encodes > as &gt; and < as &lt; in paragraph text
+          .replace(/(^|\s)(&gt;:\)|&gt;:-\))(?=\s|$)/g, "$1😈")
+          .replace(/(^|\s)(&gt;:\(|&gt;:-\()(?=\s|$)/g, "$1😠")
           .replace(/(^|\s)(:\)|:-\)|=\))(?=\s|$)/g, "$1😊")
           .replace(/(^|\s)(:\(|:-\(|=\()(?=\s|$)/g, "$1😞")
           .replace(/(^|\s)(:D|:-D|=D)(?=\s|$)/g, "$1😄")
           .replace(/(^|\s)(:P|:-P|=P)(?=\s|$)/g, "$1😛")
           .replace(/(^|\s)(;\)|;-\))(?=\s|$)/g, "$1😉")
-          .replace(/(^|\s)(:\'\(|:'-\()(?=\s|$)/g, "$1😢")
+          .replace(/(^|\s)(:\'\(|:'\(|:'-\()(?=\s|$)/g, "$1😢")
           .replace(/(^|\s)(:\||:-\|)(?=\s|$)/g, "$1😐")
           .replace(/(^|\s)(:o|:-o|:O|:-O)(?=\s|$)/g, "$1😮")
-          .replace(/(^|\s)(<3)(?=\s|$)/g, "$1❤️")
-          .replace(/(^|\s)(<\/3)(?=\s|$)/g, "$1💔") +
+          .replace(/(^|\s)(&lt;3)(?=\s|$)/g, "$1❤️")
+          .replace(/(^|\s)(&lt;\/3)(?=\s|$)/g, "$1💔") +
         "<"
       );
 
