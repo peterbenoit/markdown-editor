@@ -88,6 +88,18 @@ function App() {
   const announceTimerRef = useRef(null);
   const toolbarRef = useRef(null);
   const [toolbarFocusIdx, setToolbarFocusIdx] = useState(0);
+  const versionsRef = useRef(null);
+
+  useEffect(() => {
+    if (!showVersions) return;
+    const handler = (e) => {
+      if (versionsRef.current && !versionsRef.current.contains(e.target)) {
+        setShowVersions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showVersions]);
 
   useEffect(() => {
     const saved = localStorage.getItem("markdown");
@@ -498,7 +510,7 @@ ${html}
               title={`Insert ${label}`}
               aria-label={`Insert ${label}`}
               tabIndex={toolbarTabIndex(iconButtons.length + idx)}
-              className={`p-1.5 rounded text-xs font-bold leading-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
+              className={`p-1.5 w-7 rounded text-[11px] font-bold leading-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
             >
               {label}
             </button>
@@ -529,7 +541,7 @@ ${html}
           </button>
 
           {/* Version snapshots */}
-          <div className="relative">
+          <div className="relative" ref={versionsRef}>
             <button
               onClick={() => setShowVersions(v => !v)}
               title="Saved snapshots"
