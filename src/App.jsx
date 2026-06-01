@@ -102,9 +102,34 @@ function App() {
     return () => document.removeEventListener("mousedown", handler);
   }, [showVersions]);
 
+  const STARTER = `# Markdown Editor
+
+Type on the left, see the result on the right.
+
+---
+
+**Bold**, _italic_, and ~~strikethrough~~ work out of the box, along with [links](https://example.com) and \`inline code\`.
+
+## A few things to try
+
+\`\`\`js
+// Fenced code blocks get syntax highlighting
+const greet = (name) => \`Hello, \${name}!\`;
+\`\`\`
+
+- [x] Task lists
+- [ ] Are supported too
+
+> Clear this document to start writing.
+`;
+
   useEffect(() => {
     const saved = localStorage.getItem("markdown");
-    if (saved) setMarkdown(saved);
+    if (saved !== null) {
+      setMarkdown(saved);
+    } else {
+      setMarkdown(STARTER);
+    }
   }, []);
 
   useEffect(() => {
