@@ -10,6 +10,11 @@ import {
   ItalicIcon,
   LinkIcon,
   CodeBracketIcon,
+  SaveIcon,
+  ExportIcon,
+  LoadIcon,
+  TrashIcon,
+  SnapshotIcon,
   GitHubIcon,
 } from "./icons.jsx";
 import "highlight.js/styles/atom-one-dark.css";
@@ -493,7 +498,7 @@ ${html}
               title={`Insert ${label}`}
               aria-label={`Insert ${label}`}
               tabIndex={toolbarTabIndex(iconButtons.length + idx)}
-              className={`px-1.5 py-0.5 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
+              className={`p-1.5 rounded text-xs font-bold leading-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
             >
               {label}
             </button>
@@ -501,26 +506,26 @@ ${html}
 
           <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
 
-          <button onClick={saveToFile} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length)} className={`px-2 py-1 rounded text-xs font-medium transition-colors ${btnTheme}`}>
-            Save
+          <button onClick={saveToFile} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length)} title="Save to file" aria-label="Save to file" className={`p-1.5 rounded transition-colors ${btnTheme}`}>
+            <SaveIcon className="h-4 w-4" />
           </button>
-          <button onClick={exportToHtml} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 1)} className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
-            Export
+          <button onClick={exportToHtml} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 1)} title="Export to HTML" aria-label="Export to HTML" className={`p-1.5 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
+            <ExportIcon className="h-4 w-4" />
           </button>
-          <label tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 2)} className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${btnTheme}`}>
-            Load
+          <label tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 2)} title="Load file" aria-label="Load file" className={`p-1.5 rounded transition-colors cursor-pointer ${btnTheme}`}>
+            <LoadIcon className="h-4 w-4" />
             <input type="file" accept=".md,.txt" onChange={loadFromFile} className="sr-only" />
           </label>
           <button onClick={clearEditor}
             disabled={!markdown}
             tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 3)}
-            title={confirmClear ? "Click again to confirm" : "Clear editor"}
+            title={confirmClear ? "Click again to confirm clear" : "Clear editor"}
             aria-label={confirmClear ? "Confirm clear" : "Clear editor"}
-            className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+            className={`p-1.5 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
               confirmClear ? "bg-red-500 text-white hover:bg-red-600" : btnTheme
             }`}
           >
-            {confirmClear ? "Sure?" : "Clear"}
+            <TrashIcon className="h-4 w-4" />
           </button>
 
           {/* Version snapshots */}
@@ -530,9 +535,12 @@ ${html}
               title="Saved snapshots"
               aria-label="Saved snapshots"
               aria-expanded={showVersions}
-              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${btnTheme}`}
+              className={`p-1.5 rounded transition-colors relative ${btnTheme}`}
             >
-              Snapshots{versions.length > 0 ? ` (${versions.length})` : ""}
+              <SnapshotIcon className="h-4 w-4" />
+              {versions.length > 0 && (
+                <span className="absolute -top-1 -right-1 text-[9px] font-bold bg-blue-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center leading-none">{versions.length}</span>
+              )}
             </button>
             {showVersions && (
               <div
