@@ -81,6 +81,8 @@ function App() {
   const syncingRef = useRef(false);
   const [liveAnnouncement, setLiveAnnouncement] = useState("");
   const announceTimerRef = useRef(null);
+  const toolbarRef = useRef(null);
+  const [toolbarFocusIdx, setToolbarFocusIdx] = useState(0);
 
   useEffect(() => {
     const saved = localStorage.getItem("markdown");
@@ -412,6 +414,23 @@ ${html}
     });
   };
 
+  const handleToolbarKeyDown = (e) => {
+    if (!toolbarRef.current) return;
+    const buttons = Array.from(toolbarRef.current.querySelectorAll("button:not([disabled]), label:not([disabled])"));
+    const current = buttons.indexOf(document.activeElement);
+    if (current === -1) return;
+    let next = current;
+    if (e.key === "ArrowRight") { e.preventDefault(); next = (current + 1) % buttons.length; }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); next = (current - 1 + buttons.length) % buttons.length; }
+    else if (e.key === "Home") { e.preventDefault(); next = 0; }
+    else if (e.key === "End") { e.preventDefault(); next = buttons.length - 1; }
+    else return;
+    setToolbarFocusIdx(next);
+    buttons[next].focus();
+  };
+
+  const toolbarTabIndex = (idx) => (idx === toolbarFocusIdx ? 0 : -1);
+
   const headingButtons = [
     { label: "H1", handler: () => insertHeading("# ") },
     { label: "H2", handler: () => insertHeading("## ") },
@@ -443,14 +462,21 @@ ${html}
         <span className={"w-px self-stretch mx-1 " + (isDarkMode ? "bg-gray-600" : "bg-gray-200")} aria-hidden="true" />
 
         {/* Formatting toolbar — centered */}
-        <div className="flex items-center gap-1 flex-1 flex-wrap">
-          {iconButtons.map(({ icon: Icon, title, handler }) => (
+        <div
+          ref={toolbarRef}
+          role="toolbar"
+          aria-label="Formatting toolbar"
+          onKeyDown={handleToolbarKeyDown}
+          className="flex items-center gap-1 flex-1 flex-wrap"
+        >
+          {iconButtons.map(({ icon: Icon, title, handler }, idx) => (
             <button
               key={title}
               onClick={handler}
               disabled={!isTextSelected}
               title={title}
               aria-label={title}
+              tabIndex={toolbarTabIndex(idx)}
               className={`p-1.5 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
             >
               <Icon className="h-4 w-4" />
@@ -459,13 +485,14 @@ ${html}
 
           <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
 
-          {headingButtons.map(({ label, handler }) => (
+          {headingButtons.map(({ label, handler }, idx) => (
             <button
               key={label}
               onClick={handler}
               disabled={!isTextSelected}
               title={`Insert ${label}`}
               aria-label={`Insert ${label}`}
+              tabIndex={toolbarTabIndex(iconButtons.length + idx)}
               className={`px-1.5 py-0.5 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
             >
               {label}
@@ -474,18 +501,19 @@ ${html}
 
           <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
 
-          <button onClick={saveToFile} className={`px-2 py-1 rounded text-xs font-medium transition-colors ${btnTheme}`}>
+          <button onClick={saveToFile} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length)} className={`px-2 py-1 rounded text-xs font-medium transition-colors ${btnTheme}`}>
             Save
           </button>
-          <button onClick={exportToHtml} disabled={!markdown} className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
+          <button onClick={exportToHtml} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 1)} className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
             Export
           </button>
-          <label className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${btnTheme}`}>
+          <label tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 2)} className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${btnTheme}`}>
             Load
             <input type="file" accept=".md,.txt" onChange={loadFromFile} className="sr-only" />
           </label>
           <button onClick={clearEditor}
             disabled={!markdown}
+            tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 3)}
             title={confirmClear ? "Click again to confirm" : "Clear editor"}
             aria-label={confirmClear ? "Confirm clear" : "Clear editor"}
             className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
