@@ -10,6 +10,7 @@ import {
   ItalicIcon,
   LinkIcon,
   CodeBracketIcon,
+  CodeBracketSquareIcon,
   SaveIcon,
   ExportIcon,
   LoadIcon,
@@ -401,7 +402,7 @@ ${html}
     { icon: ItalicIcon, title: "Italic", handler: () => formatSelectedText("_", "_") },
     { icon: LinkIcon, title: "Link", handler: () => formatSelectedText("[", "](url)") },
     { icon: CodeBracketIcon, title: "Inline code", handler: () => formatSelectedText("`", "`") },
-    { icon: CodeBracketIcon, title: "Code block", handler: () => formatSelectedText("\n```\n", "\n```\n") },
+    { icon: CodeBracketSquareIcon, title: "Code block", handler: () => formatSelectedText("\n```\n", "\n```\n") },
   ];
 
   const insertHeading = (prefix) => {
@@ -494,7 +495,7 @@ ${html}
               title={title}
               aria-label={title}
               tabIndex={toolbarTabIndex(idx)}
-              className={`p-1.5 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
+              className={`h-7 w-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
             >
               <Icon className="h-4 w-4" />
             </button>
@@ -510,7 +511,7 @@ ${html}
               title={`Insert ${label}`}
               aria-label={`Insert ${label}`}
               tabIndex={toolbarTabIndex(iconButtons.length + idx)}
-              className={`p-1.5 w-7 rounded text-[11px] font-bold leading-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
+              className={`h-7 w-7 flex items-center justify-center rounded text-[11px] font-bold leading-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
             >
               {label}
             </button>
@@ -518,13 +519,13 @@ ${html}
 
           <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
 
-          <button onClick={saveToFile} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length)} title="Save to file" aria-label="Save to file" className={`p-1.5 rounded transition-colors ${btnTheme}`}>
+          <button onClick={saveToFile} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length)} title="Save to file" aria-label="Save to file" className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${btnTheme}`}>
             <SaveIcon className="h-4 w-4" />
           </button>
-          <button onClick={exportToHtml} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 1)} title="Export to HTML" aria-label="Export to HTML" className={`p-1.5 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
+          <button onClick={exportToHtml} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 1)} title="Export to HTML" aria-label="Export to HTML" className={`h-7 w-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
             <ExportIcon className="h-4 w-4" />
           </button>
-          <label tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 2)} title="Load file" aria-label="Load file" className={`p-1.5 rounded transition-colors cursor-pointer ${btnTheme}`}>
+          <label tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 2)} title="Load file" aria-label="Load file" className={`h-7 w-7 flex items-center justify-center rounded transition-colors cursor-pointer ${btnTheme}`}>
             <LoadIcon className="h-4 w-4" />
             <input type="file" accept=".md,.txt" onChange={loadFromFile} className="sr-only" />
           </label>
@@ -533,7 +534,7 @@ ${html}
             tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 3)}
             title={confirmClear ? "Click again to confirm clear" : "Clear editor"}
             aria-label={confirmClear ? "Confirm clear" : "Clear editor"}
-            className={`p-1.5 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+            className={`h-7 w-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
               confirmClear ? "bg-red-500 text-white hover:bg-red-600" : btnTheme
             }`}
           >
@@ -547,7 +548,7 @@ ${html}
               title="Saved snapshots"
               aria-label="Saved snapshots"
               aria-expanded={showVersions}
-              className={`p-1.5 rounded transition-colors relative ${btnTheme}`}
+              className={`h-7 w-7 flex items-center justify-center rounded transition-colors relative ${btnTheme}`}
             >
               <SnapshotIcon className="h-4 w-4" />
               {versions.length > 0 && (
