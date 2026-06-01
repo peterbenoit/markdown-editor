@@ -37,7 +37,29 @@ marked.use({
       return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-lang-label">${label}</span><button class="code-copy-btn">Copy</button></div><pre><code class="hljs${validLang ? ` language-${validLang}` : ""}">${content}</code></pre></div>`;
     },
     listitem(token) {
-      const text = this.parser.parseInline(token.tokens);
+      // parseInline can't handle block-level tokens (nested lists, paragraphs, etc.)
+      // Route block tokens through parse(), inline tokens through parseInline()
+      const BLOCK_TYPES = new Set(['list', 'paragraph', 'blockquote', 'code', 'html', 'heading', 'table', 'hr', 'space']);
+      let text = '';
+      let inlineBuf = [];
+
+      const flushInline = () => {
+        if (inlineBuf.length) {
+          text += this.parser.parseInline(inlineBuf);
+          inlineBuf = [];
+        }
+      };
+
+      for (const t of token.tokens) {
+        if (BLOCK_TYPES.has(t.type)) {
+          flushInline();
+          if (t.type !== 'space') text += this.parser.parse([t]);
+        } else {
+          inlineBuf.push(t);
+        }
+      }
+      flushInline();
+
       if (token.task) {
         const box = token.checked
           ? `<input type="checkbox" checked disabled class="task-checkbox"> `
