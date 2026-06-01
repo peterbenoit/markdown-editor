@@ -300,6 +300,7 @@ ${html}
     const reader = new FileReader();
     reader.onload = (ev) => setMarkdown(ev.target.result);
     reader.readAsText(file);
+    e.target.value = "";
   };
 
   const getPlainText = (md) =>
@@ -544,7 +545,7 @@ ${html}
 
           <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
 
-          <button onClick={saveToFile} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length)} title="Save to file" aria-label="Save to file" className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${btnTheme}`}>
+          <button onClick={saveToFile} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length)} title="Save to file" aria-label="Save to file" className={`h-7 w-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
             <SaveIcon className="h-4 w-4" />
           </button>
           <button onClick={exportToHtml} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 1)} title="Export to HTML" aria-label="Export to HTML" className={`h-7 w-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
