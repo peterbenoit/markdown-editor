@@ -79,6 +79,8 @@ function App() {
   const textareaRef = useRef(null);
   const previewRef = useRef(null);
   const syncingRef = useRef(false);
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
+  const announceTimerRef = useRef(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("markdown");
@@ -303,6 +305,14 @@ ${html}
 
   const wordCount = markdown.split(/\s+/).filter(Boolean).length;
   const charCount = getPlainText(markdown).length;
+
+  useEffect(() => {
+    clearTimeout(announceTimerRef.current);
+    announceTimerRef.current = setTimeout(() => {
+      setLiveAnnouncement(`${wordCount} words, ${charCount} characters`);
+    }, 1500);
+    return () => clearTimeout(announceTimerRef.current);
+  }, [wordCount, charCount]);
   const { meta, body } = parseFrontmatter(markdown);
 
   const applyTypography = (rawHtml) => {
@@ -672,6 +682,7 @@ ${html}
             : "bg-gray-100 text-gray-500 border-gray-200")
         }
       >
+        <div aria-live="polite" aria-atomic="true" className="sr-only">{liveAnnouncement}</div>
         <span>
           <span>Words: {wordCount}</span>
           <span className="mx-2">·</span>
