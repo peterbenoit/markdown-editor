@@ -176,16 +176,33 @@ const greet = (name) => \`Hello, \${name}!\`;
     const trailingSpaces = selectedText.match(/\s*$/)[0];
     const trimmedText = selectedText.trim();
 
-    const newText =
-      markdown.slice(0, start) +
-      leadingSpaces +
-      before +
-      trimmedText +
-      after +
-      trailingSpaces +
-      markdown.slice(end);
-    const newStart = start + leadingSpaces.length + before.length;
-    const newEnd = newStart + trimmedText.length;
+    const isWrapped =
+      trimmedText.startsWith(before) && trimmedText.endsWith(after);
+
+    let newText, newStart, newEnd;
+    if (isWrapped) {
+      const unwrapped = trimmedText.slice(before.length, trimmedText.length - after.length);
+      newText =
+        markdown.slice(0, start) +
+        leadingSpaces +
+        unwrapped +
+        trailingSpaces +
+        markdown.slice(end);
+      newStart = start + leadingSpaces.length;
+      newEnd = newStart + unwrapped.length;
+    } else {
+      newText =
+        markdown.slice(0, start) +
+        leadingSpaces +
+        before +
+        trimmedText +
+        after +
+        trailingSpaces +
+        markdown.slice(end);
+      newStart = start + leadingSpaces.length + before.length;
+      newEnd = newStart + trimmedText.length;
+    }
+
     setMarkdown(newText);
     requestAnimationFrame(() => {
       textarea.focus();

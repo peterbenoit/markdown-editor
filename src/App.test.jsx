@@ -49,3 +49,58 @@ test('dark mode toggle switches aria-label', () => {
   fireEvent.click(toggle);
   expect(screen.getByLabelText('Switch to light mode')).toBeInTheDocument();
 });
+
+test('bold button wraps selected plain text', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: 'hello world' } });
+  textarea.setSelectionRange(6, 11); // "world"
+  fireEvent.select(textarea);
+  const boldButton = screen.getByTitle('Bold');
+  fireEvent.click(boldButton);
+  expect(textarea.value).toBe('hello **world**');
+});
+
+test('bold button unwraps already-bold selected text', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: 'hello **world**' } });
+  textarea.setSelectionRange(6, 15); // "**world**"
+  fireEvent.select(textarea);
+  const boldButton = screen.getByTitle('Bold');
+  fireEvent.click(boldButton);
+  expect(textarea.value).toBe('hello world');
+});
+
+test('italic button wraps selected plain text', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: 'hello world' } });
+  textarea.setSelectionRange(0, 5); // "hello"
+  fireEvent.select(textarea);
+  const italicButton = screen.getByTitle('Italic');
+  fireEvent.click(italicButton);
+  expect(textarea.value).toBe('_hello_ world');
+});
+
+test('italic button unwraps already-italic selected text', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: '_hello_ world' } });
+  textarea.setSelectionRange(0, 7); // "_hello_"
+  fireEvent.select(textarea);
+  const italicButton = screen.getByTitle('Italic');
+  fireEvent.click(italicButton);
+  expect(textarea.value).toBe('hello world');
+});
+
+test('inline code button toggles off when selection is already wrapped', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: 'use `foo` here' } });
+  textarea.setSelectionRange(4, 9); // "`foo`"
+  fireEvent.select(textarea);
+  const codeButton = screen.getByTitle('Inline code');
+  fireEvent.click(codeButton);
+  expect(textarea.value).toBe('use foo here');
+});
