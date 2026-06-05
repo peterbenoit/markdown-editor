@@ -171,8 +171,27 @@ textarea:focus-visible {
 	font-weight: 600;
 }
 
-.markdown-content tr:nth-child(even) td {
+.markdown-content.table-striped tr:nth-child(even) td {
 	background-color: #f9fafb;
+}
+
+.dark-theme .markdown-content.table-striped tr:nth-child(even) td {
+	background-color: rgba(255, 255, 255, 0.04);
+}
+
+.markdown-content th.align-left,
+.markdown-content td.align-left {
+	text-align: left;
+}
+
+.markdown-content th.align-center,
+.markdown-content td.align-center {
+	text-align: center;
+}
+
+.markdown-content th.align-right,
+.markdown-content td.align-right {
+	text-align: right;
 }
 
 /* Blockquotes */

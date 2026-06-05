@@ -16,6 +16,7 @@ import {
   LoadIcon,
   TrashIcon,
   SnapshotIcon,
+  TableCellsIcon,
   GitHubIcon,
 } from "./icons.jsx";
 import "highlight.js/styles/atom-one-dark.css";
@@ -28,6 +29,21 @@ const EMOJI_MAP = Object.fromEntries(
 marked.use({
   gfm: true,
   renderer: {
+    heading({ text, depth }) {
+      const slug = text
+        .replace(/<[^>]+>/g, "")
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
+      return `<h${depth} id="${slug}">${text}</h${depth}>\n`;
+    },
+    tablecell({ text, header, align }) {
+      const tag = header ? "th" : "td";
+      const cls = align ? ` class="align-${align}"` : "";
+      return `<${tag}${cls}>${text}</${tag}>\n`;
+    },
     code({ text, lang }) {
       const validLang = lang && hljs.getLanguage(lang) ? lang : null;
       const content = validLang
@@ -93,6 +109,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isTextSelected, setIsTextSelected] = useState(false);
   const [viewMode, setViewMode] = useState("split"); // 'editor' | 'split' | 'preview'
+  const [isStriped, setIsStriped] = useState(true);
   const [cursor, setCursor] = useState({ line: 1, col: 1 });
   const [fontSize, setFontSize] = useState(14); // px
   const FONT_SIZES = [11, 12, 13, 14, 16, 18, 20];
@@ -679,6 +696,22 @@ ${html}
               className={`px-1.5 py-0.5 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}
             >A+</button>
           </div>
+          <span className={"w-px h-5 mx-0.5 " + (isDarkMode ? "bg-gray-500" : "bg-gray-300")} aria-hidden="true" />
+
+          {/* Striped table toggle */}
+          <button
+            onClick={() => setIsStriped(s => !s)}
+            title={isStriped ? "Disable striped table rows" : "Enable striped table rows"}
+            aria-label={isStriped ? "Disable striped table rows" : "Enable striped table rows"}
+            aria-pressed={isStriped}
+            className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
+              isStriped
+                ? (isDarkMode ? "bg-blue-600 text-white hover:bg-blue-500" : "bg-blue-100 text-blue-700 hover:bg-blue-200")
+                : btnTheme
+            }`}
+          >
+            <TableCellsIcon className="h-4 w-4" />
+          </button>
         </div>
 
         {/* View mode toggle */}
@@ -763,6 +796,7 @@ ${html}
             className={
               (viewMode === "split" ? "w-1/2 border-l " : "w-full ") +
               "p-4 overflow-y-auto markdown-content " +
+              (isStriped ? "table-striped " : "") +
               (isDarkMode
                 ? "bg-gray-800 text-white border-gray-600"
                 : "bg-white text-gray-900 border-gray-200")

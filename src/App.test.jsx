@@ -104,3 +104,47 @@ test('inline code button toggles off when selection is already wrapped', () => {
   fireEvent.click(codeButton);
   expect(textarea.value).toBe('use foo here');
 });
+
+test('headings render with id attributes for anchor links', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: '## Hello World\n\nSome text' } });
+  const preview = document.querySelector('.markdown-content');
+  const h2 = preview.querySelector('h2');
+  expect(h2).toBeInTheDocument();
+  expect(h2.getAttribute('id')).toBe('hello-world');
+});
+
+test('heading with special characters slugifies cleanly', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: '### My Section (2024)!' } });
+  const preview = document.querySelector('.markdown-content');
+  const h3 = preview.querySelector('h3');
+  expect(h3.getAttribute('id')).toBe('my-section-2024');
+});
+
+test('center-aligned table column gets align-center class', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, {
+    target: {
+      value: '| Left | Center | Right |\n|:---|:---:|---:|\n| a | b | c |',
+    },
+  });
+  const preview = document.querySelector('.markdown-content');
+  const cells = preview.querySelectorAll('td');
+  expect(cells[1].className).toContain('align-center');
+  expect(cells[2].className).toContain('align-right');
+});
+
+test('striped table toggle button toggles aria-pressed and class', () => {
+  render(<App />);
+  const toggleBtn = screen.getByTitle('Disable striped table rows');
+  expect(toggleBtn.getAttribute('aria-pressed')).toBe('true');
+  const preview = document.querySelector('.markdown-content');
+  expect(preview.className).toContain('table-striped');
+  fireEvent.click(toggleBtn);
+  expect(screen.getByTitle('Enable striped table rows').getAttribute('aria-pressed')).toBe('false');
+  expect(document.querySelector('.markdown-content').className).not.toContain('table-striped');
+});
