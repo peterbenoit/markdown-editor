@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
+import markedFootnote from "marked-footnote";
+import markedSubSuper from "marked-subsuper-text";
 import { gemoji } from "gemoji";
 import hljs from "highlight.js";
 import DOMPurify from "dompurify";
@@ -86,6 +88,9 @@ marked.use({
     },
   },
 });
+
+marked.use(markedFootnote());
+marked.use(markedSubSuper());
 
 function parseFrontmatter(text) {
   const match = text.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?/);
@@ -473,7 +478,10 @@ ${html}
   };
 
   const highlightedBody = body.replace(/==([^=\n]+)==/g, "<mark>$1</mark>");
-  const html = DOMPurify.sanitize(applyTypography(marked.parse(highlightedBody)), { ADD_TAGS: ["button", "mark"] });
+  const html = DOMPurify.sanitize(applyTypography(marked.parse(highlightedBody)), {
+    ADD_TAGS: ["button", "mark", "sub", "sup", "section"],
+    ADD_ATTR: ["id", "data-footnote-ref", "data-footnotes", "data-footnote-backref", "aria-describedby", "aria-label"],
+  });
 
   const btnTheme = isDarkMode
     ? "bg-gray-600 text-gray-100 hover:bg-gray-500"

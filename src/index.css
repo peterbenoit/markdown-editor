@@ -252,6 +252,52 @@ textarea:focus-visible {
 	text-decoration: underline;
 }
 
+/* Footnotes section */
+.markdown-content .footnotes {
+	margin-top: 2em;
+	padding-top: 1em;
+	border-top: 1px solid #d1d5db;
+	font-size: 0.85em;
+	color: #6b7280;
+}
+
+.markdown-content .footnotes h2.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.markdown-content .footnotes ol {
+	padding-left: 1.25em;
+}
+
+.markdown-content .footnotes li {
+	margin-bottom: 0.25em;
+}
+
+.markdown-content sup a,
+.markdown-content .footnotes a {
+	color: #2563eb;
+	text-decoration: none;
+	font-size: 0.8em;
+}
+
+.markdown-content sup a:hover,
+.markdown-content .footnotes a:hover {
+	text-decoration: underline;
+}
+
+.dark-theme .markdown-content .footnotes {
+	border-top-color: #374151;
+	color: #9ca3af;
+}
+
 /* Dark theme overrides */
 .dark-theme .markdown-content :not(pre)>code {
 	background-color: #374151;

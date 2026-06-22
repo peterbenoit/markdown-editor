@@ -148,3 +148,35 @@ test('striped table toggle button toggles aria-pressed and class', () => {
   expect(screen.getByTitle('Enable striped table rows').getAttribute('aria-pressed')).toBe('false');
   expect(document.querySelector('.markdown-content').className).not.toContain('table-striped');
 });
+
+test('superscript renders ^text^ as <sup>', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: '19^th^' } });
+  const preview = document.querySelector('.markdown-content');
+  expect(preview.querySelector('sup')).toBeInTheDocument();
+  expect(preview.querySelector('sup').textContent).toBe('th');
+});
+
+test('subscript renders ^^text^^ as <sub>', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: 'H^^2^^O' } });
+  const preview = document.querySelector('.markdown-content');
+  expect(preview.querySelector('sub')).toBeInTheDocument();
+  expect(preview.querySelector('sub').textContent).toBe('2');
+});
+
+test('footnotes render [^1] references and a footnotes section', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, {
+    target: {
+      value: 'See note.[^1]\n\n[^1]: This is the footnote.',
+    },
+  });
+  const preview = document.querySelector('.markdown-content');
+  expect(preview.querySelector('sup a')).toBeInTheDocument();
+  expect(preview.querySelector('.footnotes')).toBeInTheDocument();
+  expect(preview.querySelector('.footnotes').textContent).toContain('This is the footnote.');
+});
