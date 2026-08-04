@@ -254,6 +254,49 @@ const greet = (name) => \`Hello, \${name}!\`;
       if (e.key === "b") { e.preventDefault(); formatSelectedText("**", "**"); }
       else if (e.key === "i") { e.preventDefault(); formatSelectedText("_", "_"); }
       else if (e.key === "k") { e.preventDefault(); formatSelectedText("[", "](url)"); }
+      return;
+    }
+
+    const AUTO_PAIRS = { "[": "]", "(": ")", "{": "}", '"': '"', "`": "`" };
+    const closer = AUTO_PAIRS[e.key];
+    if (closer) {
+      const textarea = textareaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      if (start !== end) {
+        e.preventDefault();
+        const selectedText = markdown.slice(start, end);
+        setMarkdown(markdown.slice(0, start) + e.key + selectedText + closer + markdown.slice(end));
+        requestAnimationFrame(() => {
+          textarea.setSelectionRange(start + 1, start + 1 + selectedText.length);
+        });
+        return;
+      }
+
+      // Quotes/backticks toggle as a pair only when not already inside a word
+      const isSymmetric = e.key === closer;
+      if (!isSymmetric || !/\w/.test(markdown[start - 1] || "")) {
+        e.preventDefault();
+        setMarkdown(markdown.slice(0, start) + e.key + closer + markdown.slice(end));
+        requestAnimationFrame(() => {
+          textarea.setSelectionRange(start + 1, start + 1);
+        });
+        return;
+      }
+    }
+
+    // Typing a closing character right before an auto-inserted match just skips over it
+    if (Object.values(AUTO_PAIRS).includes(e.key)) {
+      const textarea = textareaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      if (start === end && markdown[start] === e.key) {
+        e.preventDefault();
+        requestAnimationFrame(() => {
+          textarea.setSelectionRange(start + 1, start + 1);
+        });
+      }
     }
   };
 
