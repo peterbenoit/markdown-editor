@@ -126,6 +126,12 @@ function App() {
   });
   const [showVersions, setShowVersions] = useState(false);
   const MAX_VERSIONS = 5;
+  const [splitRatio, setSplitRatio] = useState(() => {
+    const saved = Number(localStorage.getItem("md-split-ratio"));
+    return saved >= 20 && saved <= 80 ? saved : 50;
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const paneContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const previewRef = useRef(null);
   const syncingRef = useRef(false);
@@ -408,6 +414,48 @@ ${html}
     syncingRef.current = true;
     editor.scrollTop = ratio * (editor.scrollHeight - editor.clientHeight);
     requestAnimationFrame(() => { syncingRef.current = false; });
+  };
+
+  const clampRatio = (r) => Math.min(80, Math.max(20, r));
+
+  const handleDividerPointerDown = (e) => {
+    e.preventDefault();
+    e.currentTarget.focus();
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const handleMove = (e) => {
+      const container = paneContainerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const ratio = ((clientX - rect.left) / rect.width) * 100;
+      setSplitRatio(clampRatio(ratio));
+    };
+    const handleUp = () => setIsDragging(false);
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleUp);
+    document.addEventListener("touchmove", handleMove);
+    document.addEventListener("touchend", handleUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleUp);
+      document.removeEventListener("touchmove", handleMove);
+      document.removeEventListener("touchend", handleUp);
+    };
+  }, [isDragging]);
+
+  useEffect(() => {
+    localStorage.setItem("md-split-ratio", String(splitRatio));
+  }, [splitRatio]);
+
+  const handleDividerKeyDown = (e) => {
+    if (e.key === "ArrowLeft") { e.preventDefault(); setSplitRatio((r) => clampRatio(r - 2)); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); setSplitRatio((r) => clampRatio(r + 2)); }
+    else if (e.key === "Home") { e.preventDefault(); setSplitRatio(20); }
+    else if (e.key === "End") { e.preventDefault(); setSplitRatio(80); }
   };
 
   const wordCount = markdown.split(/\s+/).filter(Boolean).length;
@@ -775,16 +823,18 @@ ${html}
         </div>
       </header>
 
-      <div className="flex overflow-hidden">
+      <div ref={paneContainerRef} className={"flex overflow-hidden" + (isDragging ? " select-none cursor-col-resize" : "")}>
         {viewMode !== "preview" && (
           <textarea
             ref={textareaRef}
             className={
-              (viewMode === "split" ? "w-1/2" : "w-full") +
               " p-4 resize-none font-mono h-full focus:outline-none " +
               (isDarkMode ? "bg-gray-700 text-white" : "bg-gray-50 text-gray-900")
             }
-            style={{ fontSize: `${fontSize}px` }}
+            style={{
+              fontSize: `${fontSize}px`,
+              width: viewMode === "split" ? `${splitRatio}%` : "100%",
+            }}
             value={markdown}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
@@ -796,19 +846,40 @@ ${html}
             spellCheck="false"
           />
         )}
+        {viewMode === "split" && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize editor and preview panes"
+            aria-valuenow={Math.round(splitRatio)}
+            aria-valuemin={20}
+            aria-valuemax={80}
+            tabIndex={0}
+            onMouseDown={handleDividerPointerDown}
+            onTouchStart={handleDividerPointerDown}
+            onKeyDown={handleDividerKeyDown}
+            className={
+              "w-1.5 shrink-0 cursor-col-resize flex items-center justify-center " +
+              (isDarkMode ? "bg-gray-600 hover:bg-blue-500" : "bg-gray-200 hover:bg-blue-400") +
+              (isDragging ? " bg-blue-500" : "") +
+              " transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            }
+          />
+        )}
         {viewMode !== "editor" && (
           <div
             ref={previewRef}
             onScroll={handlePreviewScroll}
             onClick={handleCopyClick}
             className={
-              (viewMode === "split" ? "w-1/2 border-l " : "w-full ") +
+              (viewMode === "split" ? "" : "w-full ") +
               "p-4 overflow-y-auto markdown-content " +
               (isStriped ? "table-striped " : "") +
               (isDarkMode
-                ? "bg-gray-800 text-white border-gray-600"
-                : "bg-white text-gray-900 border-gray-200")
+                ? "bg-gray-800 text-white"
+                : "bg-white text-gray-900")
             }
+            style={{ width: viewMode === "split" ? `${100 - splitRatio}%` : undefined }}
           >
           {meta && (
             <pre
