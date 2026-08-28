@@ -20,6 +20,47 @@ test('typing in the textarea updates the preview', () => {
   expect(preview.innerHTML).toContain('<strong>');
 });
 
+test('fenced code blocks include syntax tokens and a readable language label', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, {
+    target: { value: '```js\nconst greeting = "hello";\n```' },
+  });
+
+  const preview = document.querySelector('.markdown-content');
+  expect(preview.querySelector('code')).toHaveClass('language-javascript');
+  expect(preview.querySelector('.hljs-keyword')).toHaveTextContent('const');
+  expect(preview.querySelector('.code-lang-label')).toHaveTextContent('JavaScript');
+  expect(preview.querySelector('.code-line-count')).toHaveTextContent('1 line');
+  expect(screen.getByLabelText('Copy code to clipboard')).toBeInTheDocument();
+});
+
+test('unknown fenced languages safely fall back to plain text', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, {
+    target: { value: '```madeup\n<script>alert("nope")</script>\n```' },
+  });
+
+  const preview = document.querySelector('.markdown-content');
+  expect(preview.querySelector('code')).toHaveClass('language-text');
+  expect(preview.querySelector('.code-lang-label')).toHaveTextContent('madeup · plain text');
+  expect(preview.querySelector('code').textContent).toBe('<script>alert("nope")</script>');
+  expect(preview.querySelector('code script')).not.toBeInTheDocument();
+});
+
+test('unlabelled code-like blocks can detect a syntax language', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, {
+    target: { value: '```\nfunction add(a, b) {\n  return a + b;\n}\n```' },
+  });
+
+  const preview = document.querySelector('.markdown-content');
+  expect(preview.querySelector('code').className).not.toContain('language-text');
+  expect(preview.querySelector('.code-lang-label')).toHaveTextContent('detected');
+});
+
 test('renders inline html-looking code inside ordered lists as code', () => {
   render(<App />);
   const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);

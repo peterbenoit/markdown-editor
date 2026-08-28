@@ -21,8 +21,66 @@ import {
   TableCellsIcon,
   GitHubIcon,
 } from "./icons.jsx";
-import "highlight.js/styles/atom-one-dark.css";
 import "./index.css";
+
+const LANGUAGE_ALIASES = {
+  html: "xml",
+  shell: "bash",
+  sh: "bash",
+  yml: "yaml",
+  js: "javascript",
+  jsx: "javascript",
+  ts: "typescript",
+  tsx: "typescript",
+};
+
+const LANGUAGE_LABELS = {
+  bash: "Shell",
+  css: "CSS",
+  javascript: "JavaScript",
+  json: "JSON",
+  markdown: "Markdown",
+  python: "Python",
+  sql: "SQL",
+  text: "Plain text",
+  typescript: "TypeScript",
+  xml: "HTML / XML",
+  yaml: "YAML",
+};
+
+const AUTO_DETECT_LANGUAGES = [
+  "bash", "css", "javascript", "json", "markdown", "python", "sql", "typescript", "xml", "yaml",
+];
+
+const escapeHtml = (text) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const getHighlightedCode = (text, languageHint = "") => {
+  const requested = languageHint.trim().split(/\s+/)[0].toLowerCase();
+  const language = LANGUAGE_ALIASES[requested] || requested;
+
+  if (language && hljs.getLanguage(language)) {
+    return {
+      html: hljs.highlight(text, { language }).value,
+      language,
+      label: LANGUAGE_LABELS[language] || requested.toUpperCase(),
+    };
+  }
+
+  // Auto-detect only code-like, multi-line content so prose remains plain text.
+  if (!requested && text.includes("\n") && /[{}()[\];:=<>]|\b(const|let|function|class|def|SELECT|FROM)\b/.test(text)) {
+    const detected = hljs.highlightAuto(text, AUTO_DETECT_LANGUAGES);
+    if (detected.language && detected.relevance >= 2) {
+      return {
+        html: detected.value,
+        language: detected.language,
+        label: `${LANGUAGE_LABELS[detected.language] || detected.language.toUpperCase()} · detected`,
+      };
+    }
+  }
+
+  return { html: escapeHtml(text), language: "text", label: requested ? `${requested} · plain text` : "Plain text" };
+};
 
 const EMOJI_MAP = Object.fromEntries(
   gemoji.flatMap((e) => e.names.map((n) => [n, e.emoji]))
@@ -47,12 +105,9 @@ marked.use({
       return `<${tag}${cls}>${text}</${tag}>\n`;
     },
     code({ text, lang }) {
-      const validLang = lang && hljs.getLanguage(lang) ? lang : null;
-      const content = validLang
-        ? hljs.highlight(text, { language: validLang }).value
-        : text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      const label = validLang || "text";
-      return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-lang-label">${label}</span><button class="code-copy-btn">Copy</button></div><pre><code class="hljs${validLang ? ` language-${validLang}` : ""}">${content}</code></pre></div>`;
+      const highlighted = getHighlightedCode(text, lang || "");
+      const lineCount = text.split("\n").length;
+      return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-lang-label"><span class="code-status-dot" aria-hidden="true"></span>${highlighted.label}</span><span class="code-block-actions"><span class="code-line-count">${lineCount} ${lineCount === 1 ? "line" : "lines"}</span><button class="code-copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></span></div><pre><code class="hljs language-${highlighted.language}">${highlighted.html}</code></pre></div>`;
     },
     listitem(token) {
       // parseInline can't handle block-level tokens (nested lists, paragraphs, etc.)
@@ -340,12 +395,16 @@ const greet = (name) => \`Hello, \${name}!\`;
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${title}</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1f2937; }
-  h1,h2,h3,h4,h5,h6 { margin: 1em 0 0.5em; font-weight: bold; line-height: 1.25; }
-  h1 { font-size: 2em; } h2 { font-size: 1.5em; } h3 { font-size: 1.25em; }
-  pre { background: #1e1e2e; color: #cdd6f4; padding: 1rem; border-radius: 6px; overflow-x: auto; }
-  code { font-family: monospace; }
-  :not(pre) > code { background: #f0f0f0; padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.875em; }
+  body { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 780px; margin: 3rem auto; padding: 0 1.5rem; line-height: 1.7; color: #172033; }
+  h1,h2,h3,h4,h5,h6 { margin: 1.4em 0 0.55em; font-weight: 700; line-height: 1.2; letter-spacing: -.02em; }
+  h1 { font-size: 2.25em; padding-bottom: .35em; border-bottom: 1px solid #dce2ea; } h2 { font-size: 1.55em; } h3 { font-size: 1.25em; }
+  code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; }
+  :not(pre) > code { background: #eef2ff; color: #4338ca; padding: .18em .4em; border: 1px solid #dfe3ff; border-radius: 5px; font-size: .875em; }
+  .code-block-wrapper { margin: 1.5em 0; overflow: hidden; border: 1px solid #25334d; border-radius: 10px; background: #101827; box-shadow: 0 10px 30px rgba(15,23,42,.12); }
+  .code-block-header { display: flex; align-items: center; justify-content: space-between; padding: .55rem .8rem; border-bottom: 1px solid #25334d; background: #172033; color: #a7b2c7; font: 600 .7rem/1.2 Inter, sans-serif; letter-spacing: .055em; text-transform: uppercase; }
+  .code-lang-label, .code-block-actions { display: flex; align-items: center; gap: .55rem; } .code-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #5eead4; box-shadow: 0 0 0 3px rgba(94,234,212,.12); }
+  .code-line-count, .code-copy-btn { display: none; } .code-block-wrapper pre { margin: 0; padding: 1.1rem 1.2rem; overflow-x: auto; background: #101827; color: #d9e2f2; font-size: .875rem; line-height: 1.65; tab-size: 2; }
+  .hljs-comment,.hljs-quote { color:#8290a8; font-style:italic } .hljs-keyword,.hljs-selector-tag,.hljs-literal,.hljs-section { color:#c4b5fd } .hljs-string,.hljs-attr,.hljs-addition { color:#86efac } .hljs-number,.hljs-symbol,.hljs-bullet { color:#fbbf24 } .hljs-title,.hljs-title.class_,.hljs-title.function_ { color:#7dd3fc } .hljs-variable,.hljs-template-variable,.hljs-selector-class { color:#fda4af } .hljs-built_in,.hljs-type,.hljs-meta { color:#67e8f9 } .hljs-deletion { color:#fca5a5 }
   blockquote { margin: 1em 0; padding: 0.5em 1em; border-left: 4px solid #d1d5db; color: #6b7280; font-style: italic; }
   table { width: 100%; border-collapse: collapse; margin: 1em 0; }
   th, td { padding: 0.5em 0.75em; border: 1px solid #d1d5db; }
@@ -353,7 +412,6 @@ const greet = (name) => \`Hello, \${name}!\`;
   img { max-width: 100%; height: auto; }
   a { color: #2563eb; }
   hr { border: none; border-top: 1px solid #d1d5db; margin: 1.5em 0; }
-  .code-block-header { display:none; }
 </style>
 </head>
 <body>
@@ -571,7 +629,7 @@ ${html}
   const highlightedBody = body.replace(/==([^=\n]+)==/g, "<mark>$1</mark>");
   const html = DOMPurify.sanitize(applyTypography(marked.parse(highlightedBody)), {
     ADD_TAGS: ["button", "mark", "sub", "sup", "section"],
-    ADD_ATTR: ["id", "data-footnote-ref", "data-footnotes", "data-footnote-backref", "aria-describedby", "aria-label"],
+    ADD_ATTR: ["id", "data-footnote-ref", "data-footnotes", "data-footnote-backref", "aria-describedby", "aria-label", "type"],
   });
 
   const btnTheme = isDarkMode
@@ -646,12 +704,12 @@ ${html}
     >
       <header
         className={
-          "sticky top-0 z-10 flex items-center gap-2 px-3 py-2 border-b " +
+          "app-header sticky top-0 z-10 flex items-center gap-2 px-3 py-2 border-b " +
           (isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200")
         }
       >
         {/* Logo + name */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="app-brand flex items-center gap-2 shrink-0">
           <img src="/logo.png" alt="" className="h-7 w-7" aria-hidden="true" />
           <span className={"font-semibold text-sm tracking-tight " + (isDarkMode ? "text-white" : "text-gray-800")}>
             Markdown Editor
@@ -666,7 +724,7 @@ ${html}
           role="toolbar"
           aria-label="Formatting toolbar"
           onKeyDown={handleToolbarKeyDown}
-          className="flex items-center gap-1 flex-1 flex-wrap"
+          className="formatting-toolbar flex items-center gap-1 flex-1 flex-wrap"
         >
           {iconButtons.map(({ icon: Icon, title, handler }, idx) => (
             <button
@@ -815,7 +873,7 @@ ${html}
 
         {/* View mode toggle */}
         <div
-          className={"flex items-center rounded overflow-hidden border shrink-0 " + (isDarkMode ? "border-gray-600" : "border-gray-300")}
+          className={"view-mode-control flex items-center rounded overflow-hidden border shrink-0 " + (isDarkMode ? "border-gray-600" : "border-gray-300")}
           role="group"
           aria-label="View mode"
         >
@@ -842,7 +900,7 @@ ${html}
         </div>
 
         {/* Right rail — theme toggle + GitHub */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="app-actions flex items-center gap-1 shrink-0">
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`p-1.5 rounded transition-colors ${btnTheme}`}
@@ -866,12 +924,12 @@ ${html}
         </div>
       </header>
 
-      <div ref={paneContainerRef} className={"flex overflow-hidden" + (isDragging ? " select-none cursor-col-resize" : "")}>
+      <div ref={paneContainerRef} className={`app-panes view-${viewMode} flex overflow-hidden${isDragging ? " select-none cursor-col-resize" : ""}`}>
         {viewMode !== "preview" && (
           <textarea
             ref={textareaRef}
             className={
-              " p-4 resize-none font-mono h-full focus:outline-none " +
+              "editor-pane p-4 resize-none font-mono h-full focus:outline-none " +
               (isDarkMode ? "bg-gray-700 text-white" : "bg-gray-50 text-gray-900")
             }
             style={{
@@ -902,7 +960,7 @@ ${html}
             onTouchStart={handleDividerPointerDown}
             onKeyDown={handleDividerKeyDown}
             className={
-              "w-1.5 shrink-0 cursor-col-resize flex items-center justify-center " +
+              "pane-divider w-1.5 shrink-0 cursor-col-resize flex items-center justify-center " +
               (isDarkMode ? "bg-gray-600 hover:bg-blue-500" : "bg-gray-200 hover:bg-blue-400") +
               (isDragging ? " bg-blue-500" : "") +
               " transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -916,7 +974,7 @@ ${html}
             onClick={handleCopyClick}
             className={
               (viewMode === "split" ? "" : "w-full ") +
-              "p-4 overflow-y-auto markdown-content " +
+              "preview-pane p-4 overflow-y-auto markdown-content " +
               (isStriped ? "table-striped " : "") +
               (isDarkMode
                 ? "bg-gray-800 text-white"
@@ -924,6 +982,7 @@ ${html}
             }
             style={{ width: viewMode === "split" ? `${100 - splitRatio}%` : undefined }}
           >
+          <article className="preview-document">
           {meta && (
             <pre
               aria-label="Document metadata"
@@ -940,13 +999,14 @@ ${html}
             </pre>
           )}
           <div dangerouslySetInnerHTML={{ __html: html }} />
+          </article>
           </div>
         )}
       </div>
 
       <footer
         className={
-          "py-2 px-4 text-xs flex items-center justify-between gap-4 border-t " +
+          "app-footer py-2 px-4 text-xs flex items-center justify-between gap-4 border-t " +
           (isDarkMode
             ? "bg-gray-900 text-gray-400 border-gray-700"
             : "bg-gray-100 text-gray-500 border-gray-200")
