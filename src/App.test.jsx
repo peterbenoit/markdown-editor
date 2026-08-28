@@ -1,9 +1,30 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
+
+beforeEach(() => {
+  localStorage.clear();
+  window.history.replaceState(null, '', window.location.pathname);
+});
 
 test('renders the markdown textarea', () => {
   render(<App />);
   expect(screen.getByPlaceholderText(/Enter Markdown here/i)).toBeInTheDocument();
+});
+
+test('links to the canonical GitHub repository', () => {
+  render(<App />);
+  expect(screen.getByRole('link', { name: 'View source on GitHub' })).toHaveAttribute(
+    'href',
+    'https://github.com/peterbenoit/markdown-editor',
+  );
+});
+
+test('recovers the locally saved draft during initialization', () => {
+  localStorage.setItem('markdown', '# Recovered draft');
+  const { unmount } = render(<App />);
+  expect(screen.getByPlaceholderText(/Enter Markdown here/i)).toHaveValue('# Recovered draft');
+  unmount();
+  localStorage.removeItem('markdown');
 });
 
 test('toolbar buttons are disabled when no text is selected', () => {
@@ -61,6 +82,19 @@ test('unlabelled code-like blocks can detect a syntax language', () => {
   expect(preview.querySelector('.code-lang-label')).toHaveTextContent('detected');
 });
 
+test('mermaid fences render as diagram containers instead of code blocks', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, {
+    target: { value: '```mermaid\nflowchart LR\n  A --> B\n```' },
+  });
+
+  const diagram = document.querySelector('.mermaid-diagram');
+  expect(diagram).toBeInTheDocument();
+  expect(diagram).toHaveAttribute('data-mermaid-source');
+  expect(document.querySelector('.code-block-wrapper')).not.toBeInTheDocument();
+});
+
 test('renders inline html-looking code inside ordered lists as code', () => {
   render(<App />);
   const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
@@ -89,6 +123,96 @@ test('dark mode toggle switches aria-label', () => {
   const toggle = screen.getByLabelText('Switch to dark mode');
   fireEvent.click(toggle);
   expect(screen.getByLabelText('Switch to light mode')).toBeInTheDocument();
+});
+
+test('quality inspector reports issues and applies safe fixes', () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: '## Overview\n\n#### Details' } });
+
+  fireEvent.click(screen.getByLabelText('Open document insights'));
+  expect(screen.getByRole('dialog', { name: 'Document insights' })).toBeInTheDocument();
+  expect(screen.getByText('Add one level-one document title.')).toBeInTheDocument();
+  expect(screen.getByText('Heading level jumps from H2 to H4.')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Add document title' }));
+  expect(textarea.value).toBe('# Document title\n\n## Overview\n\n#### Details');
+});
+
+test('outline items move focus to the selected heading', async () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: '# Title\n\n## Second section' } });
+
+  fireEvent.click(screen.getByLabelText('Open document insights'));
+  fireEvent.click(screen.getByRole('tab', { name: 'Outline' }));
+  fireEvent.click(screen.getByRole('button', { name: /Second section/ }));
+
+  await waitFor(() => {
+    const focusedEditor = screen.getByPlaceholderText(/Enter Markdown here/i);
+    expect(focusedEditor).toHaveFocus();
+    expect(focusedEditor.selectionStart).toBe(9);
+  });
+});
+
+test('publishing studio controls branded contents and print output', async () => {
+  const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  fireEvent.change(textarea, { target: { value: '# Brief\n\n## Scope\n\nDetails' } });
+
+  fireEvent.click(screen.getByLabelText('Open publishing studio'));
+  expect(screen.getByRole('dialog', { name: 'Publishing studio' })).toBeInTheDocument();
+  expect(document.querySelector('.document-toc')).toBeInTheDocument();
+
+  fireEvent.change(screen.getByLabelText('Organization name'), { target: { value: 'Example Company' } });
+  expect(document.querySelector('.preview-document')).toHaveAttribute('data-organization', 'Example Company');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Print or save as PDF' }));
+  await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1));
+  printSpy.mockRestore();
+});
+
+test('workspace creates and switches between local documents', async () => {
+  render(<App />);
+  fireEvent.click(screen.getByLabelText('Open team workspace'));
+  expect(screen.getByRole('dialog', { name: 'Team workspace' })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: '+ New document' }));
+  expect(screen.getByPlaceholderText(/Enter Markdown here/i)).toHaveValue('# Untitled document\n\nStart writing here.');
+
+  fireEvent.click(screen.getByLabelText('Open team workspace'));
+  expect(screen.getByText('2')).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: /Markdown Editor/i })).toHaveLength(1);
+});
+
+test('workspace supports review status and anchored comments', async () => {
+  render(<App />);
+  const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
+  textarea.setSelectionRange(0, 17);
+  fireEvent.select(textarea);
+  fireEvent.click(screen.getByLabelText('Open team workspace'));
+
+  fireEvent.change(screen.getByLabelText('Document status'), { target: { value: 'in-review' } });
+  expect(screen.getByLabelText('Document status')).toHaveValue('in-review');
+  fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Pat' } });
+  fireEvent.change(screen.getByLabelText('Comment'), { target: { value: 'Ready for stakeholder review.' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Add comment' }));
+
+  expect(screen.getByText('Ready for stakeholder review.')).toBeInTheDocument();
+  expect(screen.getAllByText(/# Markdown Editor/).length).toBeGreaterThan(0);
+});
+
+test('workspace copies a portable read-only share link', async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+  render(<App />);
+  fireEvent.click(screen.getByLabelText('Open team workspace'));
+  fireEvent.click(screen.getByRole('button', { name: 'Copy read-only share link' }));
+
+  await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+  expect(writeText.mock.calls[0][0]).toContain('#share=');
+  expect(await screen.findByRole('button', { name: 'Read-only link copied' })).toBeInTheDocument();
 });
 
 test('bold button wraps selected plain text', () => {
@@ -151,7 +275,7 @@ test('headings render with id attributes for anchor links', () => {
   const textarea = screen.getByPlaceholderText(/Enter Markdown here/i);
   fireEvent.change(textarea, { target: { value: '## Hello World\n\nSome text' } });
   const preview = document.querySelector('.markdown-content');
-  const h2 = preview.querySelector('h2');
+  const h2 = preview.querySelector('h2[id]');
   expect(h2).toBeInTheDocument();
   expect(h2.getAttribute('id')).toBe('hello-world');
 });

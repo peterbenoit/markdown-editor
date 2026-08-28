@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { marked } from "marked";
 import markedFootnote from "marked-footnote";
 import markedSubSuper from "marked-subsuper-text";
@@ -20,7 +20,15 @@ import {
   SnapshotIcon,
   TableCellsIcon,
   GitHubIcon,
+  InsightsIcon,
+  WorkspaceIcon,
 } from "./icons.jsx";
+import DocumentInspector from "./DocumentInspector.jsx";
+import { analyzeMarkdown, getDocumentOutline, getLineDiff } from "./markdownQuality.js";
+import PublishingStudio from "./PublishingStudio.jsx";
+import { buildTableOfContentsHtml, getPublishingTemplate } from "./publishing.js";
+import WorkspacePanel from "./WorkspacePanel.jsx";
+import { createShareHash, deriveDocumentTitle, makeWorkspaceDocument, normalizeWorkspaceDocuments, parseShareHash } from "./workspace.js";
 import "./index.css";
 
 const LANGUAGE_ALIASES = {
@@ -82,6 +90,46 @@ const getHighlightedCode = (text, languageHint = "") => {
   return { html: escapeHtml(text), language: "text", label: requested ? `${requested} · plain text` : "Plain text" };
 };
 
+const STARTER = `# Markdown Editor
+
+Type on the left, see the result on the right.
+
+---
+
+**Bold**, _italic_, and ~~strikethrough~~ work out of the box, along with [links](https://example.com) and \`inline code\`.
+
+## A few things to try
+
+\`\`\`js
+// Fenced code blocks get syntax highlighting
+const greet = (name) => \`Hello, \${name}!\`;
+\`\`\`
+
+- [x] Task lists
+- [ ] Are supported too
+
+> Clear this document to start writing.
+`;
+
+function loadInitialWorkspace() {
+  const sharedDocument = parseShareHash(window.location.hash);
+  if (sharedDocument) {
+    return { activeDocumentId: null, documents: [], isSharedView: true, markdown: sharedDocument.content, sharedDocument };
+  }
+
+  try {
+    const savedDocuments = normalizeWorkspaceDocuments(JSON.parse(localStorage.getItem("md-documents") || "[]"));
+    if (savedDocuments.length > 0) {
+      const savedActiveId = localStorage.getItem("md-active-document");
+      const activeDocument = savedDocuments.find((document) => document.id === savedActiveId) || savedDocuments[0];
+      return { activeDocumentId: activeDocument.id, documents: savedDocuments, isSharedView: false, markdown: activeDocument.content };
+    }
+  } catch { /* Fall back to the legacy single-document draft. */ }
+
+  const initialDocument = makeWorkspaceDocument(localStorage.getItem("markdown") ?? STARTER);
+  return { activeDocumentId: initialDocument.id, documents: [initialDocument], isSharedView: false, markdown: initialDocument.content };
+}
+
 const EMOJI_MAP = Object.fromEntries(
   gemoji.flatMap((e) => e.names.map((n) => [n, e.emoji]))
 );
@@ -105,6 +153,9 @@ marked.use({
       return `<${tag}${cls}>${text}</${tag}>\n`;
     },
     code({ text, lang }) {
+      if ((lang || "").trim().toLowerCase() === "mermaid") {
+        return `<figure class="mermaid-card"><figcaption><span class="code-status-dot" aria-hidden="true"></span>Diagram</figcaption><div class="mermaid-diagram" role="img" aria-label="Mermaid diagram" data-mermaid-source="${encodeURIComponent(text)}"><pre class="mermaid-source-fallback">${escapeHtml(text)}</pre></div></figure>`;
+      }
       const highlighted = getHighlightedCode(text, lang || "");
       const lineCount = text.split("\n").length;
       return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-lang-label"><span class="code-status-dot" aria-hidden="true"></span>${highlighted.label}</span><span class="code-block-actions"><span class="code-line-count">${lineCount} ${lineCount === 1 ? "line" : "lines"}</span><button class="code-copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></span></div><pre><code class="hljs language-${highlighted.language}">${highlighted.html}</code></pre></div>`;
@@ -165,15 +216,20 @@ function parseFrontmatter(text) {
 }
 
 function App() {
-  const [markdown, setMarkdown] = useState("");
+  const [initialWorkspace] = useState(loadInitialWorkspace);
+  const [markdown, setMarkdown] = useState(initialWorkspace.markdown);
+  const [documents, setDocuments] = useState(initialWorkspace.documents);
+  const [activeDocumentId, setActiveDocumentId] = useState(initialWorkspace.activeDocumentId);
+  const isSharedView = initialWorkspace.isSharedView;
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isTextSelected, setIsTextSelected] = useState(false);
-  const [viewMode, setViewMode] = useState("split"); // 'editor' | 'split' | 'preview'
+  const [viewMode, setViewMode] = useState(isSharedView ? "preview" : "split"); // 'editor' | 'split' | 'preview'
   const [isStriped, setIsStriped] = useState(true);
   const [cursor, setCursor] = useState({ line: 1, col: 1 });
   const [fontSize, setFontSize] = useState(14); // px
   const FONT_SIZES = [11, 12, 13, 14, 16, 18, 20];
   const [storageWarning, setStorageWarning] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("saved");
   const [confirmClear, setConfirmClear] = useState(false);
   const [versions, setVersions] = useState(() => {
     try { return JSON.parse(localStorage.getItem("md-versions") || "[]"); }
@@ -195,6 +251,18 @@ function App() {
   const toolbarRef = useRef(null);
   const [toolbarFocusIdx, setToolbarFocusIdx] = useState(0);
   const versionsRef = useRef(null);
+  const insightsTriggerRef = useRef(null);
+  const [showInsights, setShowInsights] = useState(false);
+  const [insightsTab, setInsightsTab] = useState("quality");
+  const publishingTriggerRef = useRef(null);
+  const [showPublishing, setShowPublishing] = useState(false);
+  const workspaceTriggerRef = useRef(null);
+  const [showWorkspace, setShowWorkspace] = useState(false);
+  const [publishingSettings, setPublishingSettings] = useState(() => {
+    const defaults = { organization: "", accent: "#4f46e5", includeToc: true, paperSize: "letter" };
+    try { return { ...defaults, ...JSON.parse(localStorage.getItem("md-publishing-settings") || "{}") }; }
+    catch { return defaults; }
+  });
 
   useEffect(() => {
     if (!showVersions) return;
@@ -207,46 +275,44 @@ function App() {
     return () => document.removeEventListener("mousedown", handler);
   }, [showVersions]);
 
-  const STARTER = `# Markdown Editor
-
-Type on the left, see the result on the right.
-
----
-
-**Bold**, _italic_, and ~~strikethrough~~ work out of the box, along with [links](https://example.com) and \`inline code\`.
-
-## A few things to try
-
-\`\`\`js
-// Fenced code blocks get syntax highlighting
-const greet = (name) => \`Hello, \${name}!\`;
-\`\`\`
-
-- [x] Task lists
-- [ ] Are supported too
-
-> Clear this document to start writing.
-`;
-
   useEffect(() => {
-    const saved = localStorage.getItem("markdown");
-    if (saved !== null) {
-      setMarkdown(saved);
-    } else {
-      setMarkdown(STARTER);
+    if (isSharedView) {
+      setSaveStatus("shared");
+      return undefined;
     }
-  }, []);
-
-  useEffect(() => {
+    setSaveStatus("saving");
+    let statusTimer;
     try {
       localStorage.setItem("markdown", markdown);
       // Warn if stored content exceeds 4MB (leaving buffer before ~5MB browser cap)
       const bytes = new Blob([markdown]).size;
       setStorageWarning(bytes > 4 * 1024 * 1024);
+      statusTimer = setTimeout(() => setSaveStatus("saved"), 350);
     } catch {
       setStorageWarning(true);
+      setSaveStatus("error");
     }
-  }, [markdown]);
+    return () => clearTimeout(statusTimer);
+  }, [markdown, isSharedView]);
+
+  useEffect(() => {
+    if (isSharedView || !activeDocumentId) return;
+    setDocuments((currentDocuments) => currentDocuments.map((document) => (
+      document.id === activeDocumentId
+        ? { ...document, content: markdown, title: deriveDocumentTitle(markdown), updatedAt: Date.now() }
+        : document
+    )));
+  }, [markdown, activeDocumentId, isSharedView]);
+
+  useEffect(() => {
+    if (isSharedView || documents.length === 0) return;
+    localStorage.setItem("md-documents", JSON.stringify(documents));
+    localStorage.setItem("md-active-document", activeDocumentId || documents[0].id);
+  }, [documents, activeDocumentId, isSharedView]);
+
+  useEffect(() => {
+    localStorage.setItem("md-publishing-settings", JSON.stringify(publishingSettings));
+  }, [publishingSettings]);
 
   const formatSelectedText = (before, after = "") => {
     const textarea = textareaRef.current;
@@ -395,7 +461,7 @@ const greet = (name) => \`Hello, \${name}!\`;
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${title}</title>
 <style>
-  body { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 780px; margin: 3rem auto; padding: 0 1.5rem; line-height: 1.7; color: #172033; }
+  body { --accent: ${publishingSettings.accent}; font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 780px; margin: 3rem auto; padding: 0 1.5rem; line-height: 1.7; color: #172033; }
   h1,h2,h3,h4,h5,h6 { margin: 1.4em 0 0.55em; font-weight: 700; line-height: 1.2; letter-spacing: -.02em; }
   h1 { font-size: 2.25em; padding-bottom: .35em; border-bottom: 1px solid #dce2ea; } h2 { font-size: 1.55em; } h3 { font-size: 1.25em; }
   code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; }
@@ -410,11 +476,15 @@ const greet = (name) => \`Hello, \${name}!\`;
   th, td { padding: 0.5em 0.75em; border: 1px solid #d1d5db; }
   th { background: #f3f4f6; font-weight: 600; }
   img { max-width: 100%; height: auto; }
-  a { color: #2563eb; }
+  a { color: var(--accent); }
   hr { border: none; border-top: 1px solid #d1d5db; margin: 1.5em 0; }
+  .document-brand { margin-bottom: 2rem; color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+  .document-toc { margin: 1.5rem 0 2rem; padding: 1rem 1.25rem; border-left: 3px solid var(--accent); background: #f8fafc; } .document-toc h2 { margin-top: 0; font-size: 1rem; } .document-toc ol { margin-bottom: 0; padding-left: 1.25rem; } .document-toc li { margin: .25rem 0; } .document-toc .toc-depth-2 { margin-left: 1rem; } .document-toc .toc-depth-3 { margin-left: 2rem; }
 </style>
 </head>
 <body>
+${publishingSettings.organization ? `<div class="document-brand">${publishingSettings.organization.replace(/[<>&]/g, "")}</div>` : ""}
+${publishingSettings.includeToc ? buildTableOfContentsHtml(documentOutline) : ""}
 ${html}
 </body>
 </html>`;
@@ -561,6 +631,142 @@ ${html}
 
   const wordCount = markdown.split(/\s+/).filter(Boolean).length;
   const charCount = getPlainText(markdown).length;
+  const documentOutline = useMemo(() => getDocumentOutline(markdown), [markdown]);
+  const diagnostics = useMemo(() => analyzeMarkdown(markdown), [markdown]);
+  const latestSnapshot = versions[0] || null;
+  const snapshotDiff = useMemo(
+    () => latestSnapshot ? getLineDiff(markdown, latestSnapshot.content) : [],
+    [latestSnapshot, markdown]
+  );
+  const tableOfContentsHtml = useMemo(
+    () => publishingSettings.includeToc ? buildTableOfContentsHtml(documentOutline) : "",
+    [publishingSettings.includeToc, documentOutline]
+  );
+
+  const closeInsights = () => {
+    setShowInsights(false);
+    requestAnimationFrame(() => insightsTriggerRef.current?.focus());
+  };
+
+  const jumpToOffset = (offset) => {
+    setViewMode("editor");
+    setShowInsights(false);
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+      textarea?.focus();
+      textarea?.setSelectionRange(offset, offset);
+      updateCursor();
+    });
+  };
+
+  const applyDiagnosticFix = (fix) => {
+    const nextMarkdown = markdown.slice(0, fix.start) + fix.text + markdown.slice(fix.end);
+    setMarkdown(nextMarkdown);
+    setViewMode("editor");
+    setShowInsights(false);
+    requestAnimationFrame(() => {
+      const focusStart = fix.start + fix.text.length;
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(focusStart, focusStart);
+    });
+  };
+
+  const closePublishing = () => {
+    setShowPublishing(false);
+    requestAnimationFrame(() => publishingTriggerRef.current?.focus());
+  };
+
+  const activeDocument = documents.find((document) => document.id === activeDocumentId) || null;
+
+  const closeWorkspace = () => {
+    setShowWorkspace(false);
+    requestAnimationFrame(() => workspaceTriggerRef.current?.focus());
+  };
+
+  const selectWorkspaceDocument = (documentId) => {
+    const nextDocument = documents.find((document) => document.id === documentId);
+    if (!nextDocument) return;
+    setActiveDocumentId(documentId);
+    setMarkdown(nextDocument.content);
+    setShowWorkspace(false);
+    setViewMode("split");
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  };
+
+  const createWorkspaceDocument = () => {
+    const nextDocument = makeWorkspaceDocument();
+    setDocuments((currentDocuments) => [...currentDocuments, nextDocument]);
+    setActiveDocumentId(nextDocument.id);
+    setMarkdown(nextDocument.content);
+    setShowWorkspace(false);
+    setViewMode("split");
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  };
+
+  const duplicateWorkspaceDocument = () => {
+    if (!activeDocument) return;
+    const duplicateTitle = `${deriveDocumentTitle(activeDocument.content)} copy`;
+    const duplicateContent = /^#\s+.+?\s*#*\s*$/m.test(activeDocument.content)
+      ? activeDocument.content.replace(/^#\s+.+?\s*#*\s*$/m, `# ${duplicateTitle}`)
+      : `# ${duplicateTitle}\n\n${activeDocument.content}`;
+    const duplicate = {
+      ...activeDocument,
+      id: crypto.randomUUID(),
+      title: duplicateTitle,
+      content: duplicateContent,
+      comments: activeDocument.comments.map((comment) => ({ ...comment, id: crypto.randomUUID() })),
+      updatedAt: Date.now(),
+    };
+    setDocuments((currentDocuments) => [...currentDocuments, duplicate]);
+    setActiveDocumentId(duplicate.id);
+    setMarkdown(duplicateContent);
+  };
+
+  const deleteWorkspaceDocument = () => {
+    if (!activeDocument || documents.length <= 1) return;
+    const remainingDocuments = documents.filter((document) => document.id !== activeDocument.id);
+    setDocuments(remainingDocuments);
+    setActiveDocumentId(remainingDocuments[0].id);
+    setMarkdown(remainingDocuments[0].content);
+  };
+
+  const updateWorkspaceDocument = (updates) => {
+    if (!activeDocumentId) return;
+    setDocuments((currentDocuments) => currentDocuments.map((document) => (
+      document.id === activeDocumentId ? { ...document, ...updates, updatedAt: Date.now() } : document
+    )));
+  };
+
+  const addWorkspaceComment = (text, author) => {
+    if (!activeDocument) return;
+    const textarea = textareaRef.current;
+    const quote = isTextSelected && textarea
+      ? markdown.slice(textarea.selectionStart, textarea.selectionEnd)
+      : "";
+    updateWorkspaceDocument({
+      comments: [...activeDocument.comments, { id: crypto.randomUUID(), author, text, quote, createdAt: Date.now() }],
+    });
+  };
+
+  const shareWorkspaceDocument = async () => {
+    if (!activeDocument) return;
+    const shareHash = createShareHash({ ...activeDocument, content: markdown, title: deriveDocumentTitle(markdown) });
+    await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}${shareHash}`);
+  };
+
+  const handlePrint = () => {
+    setShowPublishing(false);
+    setViewMode("preview");
+    document.documentElement.dataset.paperSize = publishingSettings.paperSize;
+    requestAnimationFrame(() => window.print());
+  };
+
+  const usePublishingTemplate = (templateId) => {
+    setMarkdown(getPublishingTemplate(templateId, publishingSettings.organization));
+    setShowPublishing(false);
+    setViewMode("split");
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  };
 
   useEffect(() => {
     clearTimeout(announceTimerRef.current);
@@ -629,8 +835,43 @@ ${html}
   const highlightedBody = body.replace(/==([^=\n]+)==/g, "<mark>$1</mark>");
   const html = DOMPurify.sanitize(applyTypography(marked.parse(highlightedBody)), {
     ADD_TAGS: ["button", "mark", "sub", "sup", "section"],
-    ADD_ATTR: ["id", "data-footnote-ref", "data-footnotes", "data-footnote-backref", "aria-describedby", "aria-label", "type"],
+    ADD_ATTR: ["id", "data-footnote-ref", "data-footnotes", "data-footnote-backref", "data-mermaid-source", "aria-describedby", "aria-label", "type"],
   });
+
+  useEffect(() => {
+    const diagrams = Array.from(previewRef.current?.querySelectorAll(".mermaid-diagram") || []);
+    if (!diagrams.length) return undefined;
+    let cancelled = false;
+
+    const renderDiagrams = async () => {
+      const { default: mermaid } = await import("mermaid");
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        suppressErrorRendering: true,
+        theme: isDarkMode ? "dark" : "neutral",
+        htmlLabels: false,
+        flowchart: { htmlLabels: false },
+      });
+
+      for (const [index, element] of diagrams.entries()) {
+        if (cancelled) return;
+        try {
+          const source = decodeURIComponent(element.dataset.mermaidSource || "");
+          const { svg } = await mermaid.render(`mermaid-${Date.now()}-${index}`, source);
+          if (cancelled) return;
+          element.innerHTML = DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } });
+          element.classList.add("is-rendered");
+        } catch {
+          element.classList.add("has-error");
+          element.innerHTML = '<p class="mermaid-error">This diagram could not be rendered. Check the Mermaid syntax.</p>';
+        }
+      }
+    };
+
+    renderDiagrams();
+    return () => { cancelled = true; };
+  }, [html, isDarkMode, viewMode]);
 
   const btnTheme = isDarkMode
     ? "bg-gray-600 text-gray-100 hover:bg-gray-500"
@@ -712,14 +953,15 @@ ${html}
         <div className="app-brand flex items-center gap-2 shrink-0">
           <img src="/logo.png" alt="" className="h-7 w-7" aria-hidden="true" />
           <span className={"font-semibold text-sm tracking-tight " + (isDarkMode ? "text-white" : "text-gray-800")}>
-            Markdown Editor
+            {isSharedView ? (initialWorkspace.sharedDocument.title || "Shared document") : "Markdown Editor"}
           </span>
+          {isSharedView && <span className="shared-view-badge">Read-only shared copy</span>}
         </div>
 
         <span className={"w-px self-stretch mx-1 " + (isDarkMode ? "bg-gray-600" : "bg-gray-200")} aria-hidden="true" />
 
         {/* Formatting toolbar — centered */}
-        <div
+        {!isSharedView && <div
           ref={toolbarRef}
           role="toolbar"
           aria-label="Formatting toolbar"
@@ -761,7 +1003,7 @@ ${html}
           <button onClick={saveToFile} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length)} title="Save to file" aria-label="Save to file" className={`h-7 w-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
             <SaveIcon className="h-4 w-4" />
           </button>
-          <button onClick={exportToHtml} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 1)} title="Export to HTML" aria-label="Export to HTML" className={`h-7 w-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
+          <button ref={publishingTriggerRef} onClick={() => { setShowPublishing(true); setShowInsights(false); setShowWorkspace(false); }} disabled={!markdown} tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 1)} title="Publishing studio" aria-label="Open publishing studio" className={`h-7 w-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${btnTheme}`}>
             <ExportIcon className="h-4 w-4" />
           </button>
           <label tabIndex={toolbarTabIndex(iconButtons.length + headingButtons.length + 2)} title="Load file" aria-label="Load file" className={`h-7 w-7 flex items-center justify-center rounded transition-colors cursor-pointer ${btnTheme}`}>
@@ -869,10 +1111,10 @@ ${html}
           >
             <TableCellsIcon className="h-4 w-4" />
           </button>
-        </div>
+        </div>}
 
         {/* View mode toggle */}
-        <div
+        {!isSharedView && <div
           className={"view-mode-control flex items-center rounded overflow-hidden border shrink-0 " + (isDarkMode ? "border-gray-600" : "border-gray-300")}
           role="group"
           aria-label="View mode"
@@ -897,10 +1139,33 @@ ${html}
               {label}
             </button>
           ))}
-        </div>
+        </div>}
 
         {/* Right rail — theme toggle + GitHub */}
         <div className="app-actions flex items-center gap-1 shrink-0">
+          {!isSharedView && <button
+            ref={workspaceTriggerRef}
+            type="button"
+            onClick={() => { setShowWorkspace((open) => !open); setShowInsights(false); setShowPublishing(false); }}
+            className={`workspace-trigger p-1.5 rounded transition-colors ${showWorkspace ? "is-active" : ""} ${btnTheme}`}
+            aria-label={showWorkspace ? "Close team workspace" : "Open team workspace"}
+            aria-expanded={showWorkspace}
+            title="Team workspace"
+          >
+            <WorkspaceIcon className="h-4 w-4" />
+          </button>}
+          <button
+            ref={insightsTriggerRef}
+            type="button"
+            onClick={() => { setShowInsights((open) => !open); setShowWorkspace(false); setShowPublishing(false); }}
+            className={`insights-trigger p-1.5 rounded transition-colors relative ${showInsights ? "is-active" : ""} ${btnTheme}`}
+            aria-label={showInsights ? "Close document insights" : "Open document insights"}
+            aria-expanded={showInsights}
+            title="Document insights"
+          >
+            <InsightsIcon className="h-4 w-4" />
+            {diagnostics.length > 0 && <span className="insights-count" aria-hidden="true">{Math.min(diagnostics.length, 9)}</span>}
+          </button>
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`p-1.5 rounded transition-colors ${btnTheme}`}
@@ -982,7 +1247,11 @@ ${html}
             }
             style={{ width: viewMode === "split" ? `${100 - splitRatio}%` : undefined }}
           >
-          <article className="preview-document">
+          <article
+            className="preview-document"
+            data-organization={publishingSettings.organization || undefined}
+            style={{ "--document-accent": publishingSettings.accent }}
+          >
           {meta && (
             <pre
               aria-label="Document metadata"
@@ -998,9 +1267,53 @@ ${html}
               {"---"}
             </pre>
           )}
+          {tableOfContentsHtml && <div dangerouslySetInnerHTML={{ __html: tableOfContentsHtml }} />}
           <div dangerouslySetInnerHTML={{ __html: html }} />
           </article>
           </div>
+        )}
+        {showInsights && (
+          <DocumentInspector
+            activeTab={insightsTab}
+            diagnostics={diagnostics}
+            diff={snapshotDiff}
+            isDarkMode={isDarkMode}
+            onApplyFix={applyDiagnosticFix}
+            onClose={closeInsights}
+            onJump={jumpToOffset}
+            onTabChange={setInsightsTab}
+            outline={documentOutline}
+            snapshot={latestSnapshot}
+          />
+        )}
+        {showPublishing && (
+          <PublishingStudio
+            isDarkMode={isDarkMode}
+            onClose={closePublishing}
+            onExportHtml={exportToHtml}
+            onPrint={handlePrint}
+            onSettingsChange={setPublishingSettings}
+            onUseTemplate={usePublishingTemplate}
+            settings={publishingSettings}
+          />
+        )}
+        {showWorkspace && activeDocument && (
+          <WorkspacePanel
+            activeDocument={activeDocument}
+            documents={documents}
+            isDarkMode={isDarkMode}
+            onAddComment={addWorkspaceComment}
+            onClose={closeWorkspace}
+            onCreate={createWorkspaceDocument}
+            onDelete={deleteWorkspaceDocument}
+            onDuplicate={duplicateWorkspaceDocument}
+            onSelect={selectWorkspaceDocument}
+            onShare={shareWorkspaceDocument}
+            onStatusChange={(status) => updateWorkspaceDocument({ status })}
+            selectedText={isTextSelected && textareaRef.current
+              ? markdown.slice(textareaRef.current.selectionStart, textareaRef.current.selectionEnd)
+              : ""}
+          />
         )}
       </div>
 
@@ -1019,6 +1332,11 @@ ${html}
           <span>Characters: {charCount}</span>
           <span className="mx-2">·</span>
           <span>Ln {cursor.line}, Col {cursor.col}</span>
+          <span className="mx-2">·</span>
+          <span className={`save-status save-status-${saveStatus}`} role="status">
+            <span aria-hidden="true">{saveStatus === "saved" || saveStatus === "shared" ? "✓" : saveStatus === "error" ? "!" : "•"}</span>
+            {saveStatus === "shared" ? "Shared copy" : saveStatus === "saved" ? "Saved locally" : saveStatus === "error" ? "Save failed" : "Saving"}
+          </span>
           {storageWarning && (
             <>
               <span className="mx-2">·</span>
@@ -1038,7 +1356,7 @@ ${html}
           </a>
           {" · "}
           <a
-            href="https://peterbenoit.com/markdown-fun/"
+            href="https://peterbenoit.com/md-fun/"
             target="_blank"
             rel="noopener noreferrer"
             className={isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-gray-900"}
