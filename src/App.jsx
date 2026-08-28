@@ -1154,7 +1154,7 @@ ${html}
           >
             <WorkspaceIcon className="h-4 w-4" />
           </button>}
-          <button
+          {!isSharedView && <button
             ref={insightsTriggerRef}
             type="button"
             onClick={() => { setShowInsights((open) => !open); setShowWorkspace(false); setShowPublishing(false); }}
@@ -1165,7 +1165,7 @@ ${html}
           >
             <InsightsIcon className="h-4 w-4" />
             {diagnostics.length > 0 && <span className="insights-count" aria-hidden="true">{Math.min(diagnostics.length, 9)}</span>}
-          </button>
+          </button>}
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`p-1.5 rounded transition-colors ${btnTheme}`}
@@ -1176,7 +1176,7 @@ ${html}
               : <MoonIcon className="h-4 w-4 text-blue-500" />
             }
           </button>
-          <a
+          {!isSharedView && <a
             href="https://github.com/peterbenoit/markdown-editor"
             target="_blank"
             rel="noopener noreferrer"
@@ -1185,7 +1185,7 @@ ${html}
             className={`p-1.5 rounded transition-colors ${btnTheme}`}
           >
             <GitHubIcon className="h-4 w-4" />
-          </a>
+          </a>}
         </div>
       </header>
 

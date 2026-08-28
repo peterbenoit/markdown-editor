@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
+import { createShareHash } from './workspace';
 
 beforeEach(() => {
   localStorage.clear();
@@ -17,6 +18,20 @@ test('links to the canonical GitHub repository', () => {
     'href',
     'https://github.com/peterbenoit/markdown-editor',
   );
+});
+
+test('shared copies keep dark mode but hide editor-only header actions', () => {
+  window.location.hash = createShareHash({
+    title: 'Shared brief',
+    content: '# Shared brief\n\nFor review.',
+  });
+
+  render(<App />);
+
+  expect(screen.getByText('Read-only shared copy')).toBeInTheDocument();
+  expect(screen.getByLabelText('Switch to dark mode')).toBeInTheDocument();
+  expect(screen.queryByLabelText('Open document insights')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('View source on GitHub')).not.toBeInTheDocument();
 });
 
 test('recovers the locally saved draft during initialization', () => {
