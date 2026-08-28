@@ -2,7 +2,7 @@
 
 Markdown Editor turns a browser tab into a focused writing, review, and publishing workspace. Write with live preview, catch structural problems before they ship, and export a branded document without sending the draft to a server.
 
-[Open the live editor](https://md-fun.vercel.app) · [View the project page](https://peterbenoit.com/md-fun/)
+[Open the live editor](https://md-fun.vercel.app) · [View the project page](https://peterbenoit.com/md-fun/) · [Read the roadmap](ROADMAP.md)
 
 ## What it does
 
